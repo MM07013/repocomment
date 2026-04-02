@@ -3,6 +3,9 @@ function doPost(e) {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     var initials = ((e.parameter.initials || "") + "").trim().toUpperCase();
     var reason = ((e.parameter.reason || "") + "").trim();
+    var captchaAnswer = parseInt((e.parameter.captchaAnswer || "") + "", 10);
+    var captchaFirst = parseInt((e.parameter.captchaFirst || "") + "", 10);
+    var captchaSecond = parseInt((e.parameter.captchaSecond || "") + "", 10);
 
     if (!/^[A-Z]{2}$/.test(initials)) {
       return jsonResponse_({
@@ -15,6 +18,18 @@ function doPost(e) {
       return jsonResponse_({
         success: false,
         message: "Reason must be between 1 and 200 characters."
+      });
+    }
+
+    if (
+      isNaN(captchaAnswer) ||
+      isNaN(captchaFirst) ||
+      isNaN(captchaSecond) ||
+      captchaAnswer !== captchaFirst + captchaSecond
+    ) {
+      return jsonResponse_({
+        success: false,
+        message: "Captcha answer is invalid."
       });
     }
 

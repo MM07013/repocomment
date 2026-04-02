@@ -111,6 +111,13 @@ textarea {
   font-size: 0.92rem;
 }
 
+.captcha-question {
+  display: inline-block;
+  margin-left: 8px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
 .hint,
 .char-count {
   color: var(--muted);
