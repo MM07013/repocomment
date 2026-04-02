@@ -1,5 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQA4vGm-GUmG5up12ruF58krwrdyEA1jgQ2_R6-25YQB5Hk-BX24IvtsmtLXSSNkK/exec";
-const APP_VERSION = "v1.8 - 2026-04-02 12:13 AM ET";
+const APP_VERSION = "v1.9 - 2026-04-02 12:16 AM ET";
 
 const form = document.getElementById("entry-form");
 const initialsInput = document.getElementById("initials");
@@ -147,7 +147,7 @@ form.addEventListener("submit", async (event) => {
       captchaSecond: String(captchaValues.second)
     });
 
-    setStatus("Submitted. Please check your Google Sheet for the new row.", "success");
+    setStatus("Thank you for your submission.", "success");
     showFlash("success", "Saved");
     form.reset();
     charCount.textContent = "0 / 200";
