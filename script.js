@@ -1,5 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQA4vGm-GUmG5up12ruF58krwrdyEA1jgQ2_R6-25YQB5Hk-BX24IvtsmtLXSSNkK/exec";
-const APP_VERSION = "v1.5 - 2026-04-01 11:41 PM ET";
+const APP_VERSION = "v1.6 - 2026-04-02 12:00 AM ET";
 
 const form = document.getElementById("entry-form");
 const initialsInput = document.getElementById("initials");
