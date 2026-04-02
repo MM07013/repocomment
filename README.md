@@ -1,4 +1,4 @@
-# repoMed
+# repocomment
 
 Small static form that sends data to Google Apps Script and stores it in Google Sheets.
 
@@ -27,7 +27,7 @@ Each submission is stored in this order:
 
 Your frontend is already set to submit to:
 
-`https://script.google.com/macros/s/AKfycbxmSLZgm2L_3ktoRFpNak3ZQTvo5xr4O1TzIv9x6PCYFy6RTZhfjjSRB7xN_3w5HVEC/exec`
+`https://script.google.com/macros/s/AKfycbzhQA4vGm-GUmG5up12ruF58krwrdyEA1jgQ2_R6-25YQB5Hk-BX24IvtsmtLXSSNkK/exec`
 
 In your Google Sheet:
 
@@ -42,7 +42,7 @@ In your Google Sheet:
 
 This local folder is already linked to:
 
-`https://github.com/MM07013/repoMed.git`
+`https://github.com/MM07013/repocomment.git`
 
 ## Deploy Frontend With GitHub Pages
 
@@ -54,4 +54,6 @@ After pushing:
 4. Select `main` and `/ (root)`.
 5. Save.
 
-Your page will then be available from GitHub Pages.
+Your page will then be available from GitHub Pages at:
+
+`https://mm07013.github.io/repocomment/`
