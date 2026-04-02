@@ -1,4 +1,4 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxmSLZgm2L_3ktoRFpNak3ZQTvo5xr4O1TzIv9x6PCYFy6RTZhfjjSRB7xN_3w5HVEC/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIosPcw2sChEnVFVaTkayTpxcY3KIyG8j78yHA4-prR8rxfwWYNApGQQ9frz1sc98/exec";
 
 const form = document.getElementById("entry-form");
 const initialsInput = document.getElementById("initials");
