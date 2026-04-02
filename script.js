@@ -85,11 +85,9 @@ form.addEventListener("submit", async (event) => {
   setStatus("Saving your entry...");
 
   try {
-    const response = await fetch(SCRIPT_URL, {
+    await fetch(SCRIPT_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-      },
+      mode: "no-cors",
       body: new URLSearchParams({
         initials,
         reason,
@@ -99,11 +97,7 @@ form.addEventListener("submit", async (event) => {
       })
     });
 
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
-
-    setStatus("Saved successfully.", "success");
+    setStatus("Submitted. Please check your Google Sheet for the new row.", "success");
     form.reset();
     charCount.textContent = "0 / 200";
     captchaValues = createCaptcha();
