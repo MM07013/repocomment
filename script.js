@@ -1,4 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIosPcw2sChEnVFVaTkayTpxcY3KIyG8j78yHA4-prR8rxfwWYNApGQQ9frz1sc98/exec";
+const APP_VERSION = "v1.4 - 2026-04-01 11:32 PM ET";
 
 const form = document.getElementById("entry-form");
 const initialsInput = document.getElementById("initials");
@@ -8,6 +9,7 @@ const captchaQuestion = document.getElementById("captcha-question");
 const statusText = document.getElementById("form-status");
 const charCount = document.getElementById("char-count");
 const submitButton = document.getElementById("submit-button");
+const versionText = document.getElementById("app-version");
 
 const initialsPattern = /^[A-Za-z]{2}$/;
 let captchaValues = createCaptcha();
@@ -24,6 +26,36 @@ function createCaptcha() {
 
 function renderCaptcha() {
   captchaQuestion.textContent = `${captchaValues.first} + ${captchaValues.second} = ?`;
+}
+
+function postWithHiddenForm(payload) {
+  const iframeName = `submit_target_${Date.now()}`;
+  const iframe = document.createElement("iframe");
+  iframe.name = iframeName;
+  iframe.style.display = "none";
+
+  const tempForm = document.createElement("form");
+  tempForm.method = "POST";
+  tempForm.action = SCRIPT_URL;
+  tempForm.target = iframeName;
+  tempForm.style.display = "none";
+
+  Object.entries(payload).forEach(([key, value]) => {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = key;
+    input.value = value;
+    tempForm.appendChild(input);
+  });
+
+  document.body.appendChild(iframe);
+  document.body.appendChild(tempForm);
+  tempForm.submit();
+
+  window.setTimeout(() => {
+    tempForm.remove();
+    iframe.remove();
+  }, 5000);
 }
 
 function setStatus(message, type = "") {
@@ -43,6 +75,7 @@ reasonInput.addEventListener("input", () => {
   charCount.textContent = `${reasonInput.value.length} / 200`;
 });
 
+versionText.textContent = APP_VERSION;
 renderCaptcha();
 
 form.addEventListener("submit", async (event) => {
@@ -85,16 +118,12 @@ form.addEventListener("submit", async (event) => {
   setStatus("Saving your entry...");
 
   try {
-    await fetch(SCRIPT_URL, {
-      method: "POST",
-      mode: "no-cors",
-      body: new URLSearchParams({
-        initials,
-        reason,
-        captchaAnswer,
-        captchaFirst: String(captchaValues.first),
-        captchaSecond: String(captchaValues.second)
-      })
+    postWithHiddenForm({
+      initials,
+      reason,
+      captchaAnswer,
+      captchaFirst: String(captchaValues.first),
+      captchaSecond: String(captchaValues.second)
     });
 
     setStatus("Submitted. Please check your Google Sheet for the new row.", "success");
