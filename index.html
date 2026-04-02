@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quick Form</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <section class="card">
+      <p class="eyebrow">Simple Submission</p>
+      <h1>Share Your Initials And Reason</h1>
+      <p class="intro">
+        Enter exactly 2 letters for initials and a short reason up to 200 characters.
+      </p>
+
+      <form id="entry-form" novalidate>
+        <label for="initials">Initials</label>
+        <input
+          id="initials"
+          name="initials"
+          type="text"
+          inputmode="text"
+          autocomplete="off"
+          maxlength="2"
+          placeholder="AB"
+          required
+        >
+        <p class="hint">Letters only. Example: AB</p>
+
+        <label for="reason">Reason</label>
+        <textarea
+          id="reason"
+          name="reason"
+          maxlength="200"
+          placeholder="Write your reason here..."
+          required
+        ></textarea>
+        <div class="meta-row">
+          <p class="hint">Maximum 200 characters.</p>
+          <p id="char-count" class="char-count">0 / 200</p>
+        </div>
+
+        <button id="submit-button" type="submit">Save</button>
+      </form>
+
+      <p id="form-status" class="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
