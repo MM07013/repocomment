@@ -1,5 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQA4vGm-GUmG5up12ruF58krwrdyEA1jgQ2_R6-25YQB5Hk-BX24IvtsmtLXSSNkK/exec";
-const APP_VERSION = "v1.6 - 2026-04-02 12:00 AM ET";
+const APP_VERSION = "v1.7 - 2026-04-02 12:08 AM ET";
 
 const form = document.getElementById("entry-form");
 const initialsInput = document.getElementById("initials");
@@ -10,9 +10,13 @@ const statusText = document.getElementById("form-status");
 const charCount = document.getElementById("char-count");
 const submitButton = document.getElementById("submit-button");
 const versionText = document.getElementById("app-version");
+const flashIndicator = document.getElementById("flash-indicator");
+const flashIcon = document.getElementById("flash-icon");
+const flashText = document.getElementById("flash-text");
 
 const initialsPattern = /^[A-Za-z]{2}$/;
 let captchaValues = createCaptcha();
+let flashTimeoutId;
 
 function createCaptcha() {
   const first = Math.floor(Math.random() * 9) + 1;
@@ -63,6 +67,22 @@ function setStatus(message, type = "") {
   statusText.className = type ? `status ${type}` : "status";
 }
 
+function showFlash(type, message) {
+  if (flashTimeoutId) {
+    window.clearTimeout(flashTimeoutId);
+  }
+
+  flashIndicator.className = `flash-indicator ${type} visible`;
+  flashIndicator.setAttribute("aria-hidden", "false");
+  flashIcon.textContent = type === "success" ? "✓" : "✕";
+  flashText.textContent = message;
+
+  flashTimeoutId = window.setTimeout(() => {
+    flashIndicator.className = "flash-indicator";
+    flashIndicator.setAttribute("aria-hidden", "true");
+  }, 1500);
+}
+
 function sanitizeInitials(value) {
   return value.replace(/[^A-Za-z]/g, "").toUpperCase().slice(0, 2);
 }
@@ -107,6 +127,7 @@ form.addEventListener("submit", async (event) => {
 
   if (Number(captchaAnswer) !== captchaValues.answer) {
     setStatus("Captcha answer is not correct. Please try again.", "error");
+    showFlash("error", "Wrong captcha");
     captchaValues = createCaptcha();
     renderCaptcha();
     captchaInput.value = "";
@@ -127,6 +148,7 @@ form.addEventListener("submit", async (event) => {
     });
 
     setStatus("Submitted. Please check your Google Sheet for the new row.", "success");
+    showFlash("success", "Saved");
     form.reset();
     charCount.textContent = "0 / 200";
     captchaValues = createCaptcha();
@@ -134,6 +156,7 @@ form.addEventListener("submit", async (event) => {
     initialsInput.focus();
   } catch (error) {
     setStatus("Could not save right now. Please check the Apps Script deployment settings.", "error");
+    showFlash("error", "Not saved");
     console.error(error);
   } finally {
     submitButton.disabled = false;
