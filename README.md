@@ -2,6 +2,14 @@
 
 Small static form that sends data to Google Apps Script and stores it in Google Sheets.
 
+## Recovery Point
+
+Known-good baseline:
+
+- Release: `Milestone 1`
+- Tag: `milestone-1`
+- Commit: `2c170c2`
+
 ## What This Saves
 
 Each submission is stored in this order:
