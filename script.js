@@ -1,5 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQA4vGm-GUmG5up12ruF58krwrdyEA1jgQ2_R6-25YQB5Hk-BX24IvtsmtLXSSNkK/exec";
-const APP_VERSION = "v1.9 - 2026-04-02 12:16 AM ET";
+const APP_VERSION = "v1.10 - 2026-04-03 9:06 AM ET";
 
 const form = document.getElementById("entry-form");
 const initialsInput = document.getElementById("initials");
@@ -114,13 +114,13 @@ form.addEventListener("submit", async (event) => {
   }
 
   if (!reason) {
-    setStatus("Please enter a reason.", "error");
+    setStatus("Please enter a comment.", "error");
     reasonInput.focus();
     return;
   }
 
   if (reason.length > 200) {
-    setStatus("Reason must be 200 characters or fewer.", "error");
+    setStatus("Comment must be 200 characters or fewer.", "error");
     reasonInput.focus();
     return;
   }

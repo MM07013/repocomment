@@ -8,13 +8,13 @@ Each submission is stored in this order:
 
 1. Current date and time
 2. Initials
-3. Reason
+3. Comment
 
 ## Form Rules
 
 - Initials must be exactly 2 letters
 - No numbers are allowed
-- Reason can be up to 200 characters
+- Comment can be up to 200 characters
 
 ## Files
 
@@ -36,7 +36,7 @@ In your Google Sheet:
 3. Optional headers for row 1:
    - `Timestamp`
    - `Initials`
-   - `Reason`
+   - `Comment`
 
 ## Link This Folder To GitHub
 
