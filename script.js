@@ -1,5 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQA4vGm-GUmG5up12ruF58krwrdyEA1jgQ2_R6-25YQB5Hk-BX24IvtsmtLXSSNkK/exec";
-const APP_VERSION = "v1.10 - 2026-04-03 9:06 AM ET";
+const APP_VERSION = "v1.11 - 2026-04-03 9:14 AM ET";
 
 const form = document.getElementById("entry-form");
 const initialsInput = document.getElementById("initials");
@@ -19,17 +19,35 @@ let captchaValues = createCaptcha();
 let flashTimeoutId;
 
 function createCaptcha() {
-  const first = Math.floor(Math.random() * 9) + 1;
-  const second = Math.floor(Math.random() * 9) + 1;
+  const operators = ["+", "-", "x"];
+  const operator = operators[Math.floor(Math.random() * operators.length)];
+  let first = Math.floor(Math.random() * 9) + 1;
+  let second = Math.floor(Math.random() * 9) + 1;
+  let answer;
+
+  if (operator === "-") {
+    if (second > first) {
+      const temp = first;
+      first = second;
+      second = temp;
+    }
+    answer = first - second;
+  } else if (operator === "x") {
+    answer = first * second;
+  } else {
+    answer = first + second;
+  }
+
   return {
     first,
     second,
-    answer: first + second
+    operator,
+    answer
   };
 }
 
 function renderCaptcha() {
-  captchaQuestion.textContent = `${captchaValues.first} + ${captchaValues.second} = ?`;
+  captchaQuestion.textContent = `${captchaValues.first} ${captchaValues.operator} ${captchaValues.second} = ?`;
 }
 
 function postWithHiddenForm(payload) {
@@ -144,7 +162,8 @@ form.addEventListener("submit", async (event) => {
       reason,
       captchaAnswer,
       captchaFirst: String(captchaValues.first),
-      captchaSecond: String(captchaValues.second)
+      captchaSecond: String(captchaValues.second),
+      captchaOperator: captchaValues.operator
     });
 
     setStatus("Thank you for your submission.", "success");

@@ -6,6 +6,8 @@ function doPost(e) {
     var captchaAnswer = parseInt((e.parameter.captchaAnswer || "") + "", 10);
     var captchaFirst = parseInt((e.parameter.captchaFirst || "") + "", 10);
     var captchaSecond = parseInt((e.parameter.captchaSecond || "") + "", 10);
+    var captchaOperator = ((e.parameter.captchaOperator || "") + "").trim();
+    var expectedCaptchaAnswer;
 
     if (!/^[A-Z]{2}$/.test(initials)) {
       return jsonResponse_({
@@ -21,11 +23,20 @@ function doPost(e) {
       });
     }
 
+    if (captchaOperator === "+") {
+      expectedCaptchaAnswer = captchaFirst + captchaSecond;
+    } else if (captchaOperator === "-") {
+      expectedCaptchaAnswer = captchaFirst - captchaSecond;
+    } else if (captchaOperator === "x") {
+      expectedCaptchaAnswer = captchaFirst * captchaSecond;
+    }
+
     if (
       isNaN(captchaAnswer) ||
       isNaN(captchaFirst) ||
       isNaN(captchaSecond) ||
-      captchaAnswer !== captchaFirst + captchaSecond
+      !expectedCaptchaAnswer && expectedCaptchaAnswer !== 0 ||
+      captchaAnswer !== expectedCaptchaAnswer
     ) {
       return jsonResponse_({
         success: false,
