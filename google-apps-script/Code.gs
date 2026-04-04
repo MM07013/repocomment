@@ -15,6 +15,7 @@ var QUEUE_HEADERS = [
   "Request Id",
   "Initials",
   "Comment",
+  "Event Code",
   "Status",
   "Processed At",
   "Error"
@@ -23,7 +24,8 @@ var FINAL_HEADERS = [
   "Timestamp",
   "Initials",
   "Comment",
-  "ALERT ON DATE"
+  "ALERT ON DATE",
+  "EVENT CODE"
 ];
 
 function doPost(e) {
@@ -99,6 +101,7 @@ function doPost(e) {
         requestId || Utilities.getUuid(),
         initials,
         comment,
+        eventCode,
         "QUEUED",
         "",
         ""
@@ -143,7 +146,8 @@ function processQueue() {
       var queuedAt = row[0];
       var initials = row[2];
       var comment = row[3];
-      var status = row[4];
+      var eventCode = row[4];
+      var status = row[5];
 
       if (status && status !== "QUEUED") {
         return;
@@ -152,7 +156,9 @@ function processQueue() {
       finalRows.push([
         queuedAt || new Date(),
         initials,
-        comment
+        comment,
+        "",
+        eventCode
       ]);
       processedRows.push(index + 2);
     });
@@ -162,11 +168,11 @@ function processQueue() {
     }
 
     finalSheet
-      .getRange(finalSheet.getLastRow() + 1, 1, finalRows.length, 3)
+      .getRange(finalSheet.getLastRow() + 1, 1, finalRows.length, 5)
       .setValues(finalRows);
 
     processedRows.forEach(function(rowNumber) {
-      queueSheet.getRange(rowNumber, 5, 1, 3).setValues([[
+      queueSheet.getRange(rowNumber, 6, 1, 3).setValues([[
         "PROCESSED",
         new Date(),
         ""
