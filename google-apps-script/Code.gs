@@ -7,19 +7,24 @@ function doPost(e) {
     var captchaFirst = parseInt((e.parameter.captchaFirst || "") + "", 10);
     var captchaSecond = parseInt((e.parameter.captchaSecond || "") + "", 10);
     var captchaOperator = ((e.parameter.captchaOperator || "") + "").trim();
+    var requestId = ((e.parameter.requestId || "") + "").trim();
     var expectedCaptchaAnswer;
 
     if (!/^[A-Z]{2}$/.test(initials)) {
-      return jsonResponse_({
+      return submitResponse_({
         success: false,
+        requestId: requestId,
         message: "Initials must be exactly 2 letters."
       });
     }
 
-    if (!reason || reason.length > 200) {
-      return jsonResponse_({
+    reason = reason.substring(0, 200);
+
+    if (!reason) {
+      return submitResponse_({
         success: false,
-        message: "Reason must be between 1 and 200 characters."
+        requestId: requestId,
+        message: "Please enter a comment."
       });
     }
 
@@ -35,11 +40,12 @@ function doPost(e) {
       isNaN(captchaAnswer) ||
       isNaN(captchaFirst) ||
       isNaN(captchaSecond) ||
-      !expectedCaptchaAnswer && expectedCaptchaAnswer !== 0 ||
+      (expectedCaptchaAnswer !== 0 && !expectedCaptchaAnswer) ||
       captchaAnswer !== expectedCaptchaAnswer
     ) {
-      return jsonResponse_({
+      return submitResponse_({
         success: false,
+        requestId: requestId,
         message: "Captcha answer is invalid."
       });
     }
@@ -50,13 +56,15 @@ function doPost(e) {
       reason
     ]);
 
-    return jsonResponse_({
+    return submitResponse_({
       success: true,
+      requestId: requestId,
       message: "Saved successfully."
     });
   } catch (error) {
-    return jsonResponse_({
+    return submitResponse_({
       success: false,
+      requestId: ((e && e.parameter && e.parameter.requestId) || "") + "",
       message: error.message
     });
   }
@@ -73,4 +81,21 @@ function jsonResponse_(payload) {
   return ContentService
     .createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function submitResponse_(payload) {
+  var safePayload = JSON.stringify({
+    source: "repocomment-form",
+    success: !!payload.success,
+    message: payload.message || "",
+    requestId: payload.requestId || ""
+  }).replace(/</g, "\\u003c");
+
+  return HtmlService
+    .createHtmlOutput(
+      '<!DOCTYPE html><html><body><script>' +
+      "window.top.postMessage(" + safePayload + ', "*");' +
+      "</script></body></html>"
+    )
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }

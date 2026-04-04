@@ -1,5 +1,6 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQA4vGm-GUmG5up12ruF58krwrdyEA1jgQ2_R6-25YQB5Hk-BX24IvtsmtLXSSNkK/exec";
-const APP_VERSION = "v1.11 - 2026-04-03 9:14 AM ET";
+const APP_VERSION = "v1.12 - 2026-04-04 9:12 AM ET";
+const MAX_COMMENT_LENGTH = 200;
 
 const form = document.getElementById("entry-form");
 const initialsInput = document.getElementById("initials");
@@ -51,33 +52,64 @@ function renderCaptcha() {
 }
 
 function postWithHiddenForm(payload) {
-  const iframeName = `submit_target_${Date.now()}`;
-  const iframe = document.createElement("iframe");
-  iframe.name = iframeName;
-  iframe.style.display = "none";
+  return new Promise((resolve, reject) => {
+    const requestId = `submit_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const iframeName = `submit_target_${requestId}`;
+    const iframe = document.createElement("iframe");
+    const tempForm = document.createElement("form");
 
-  const tempForm = document.createElement("form");
-  tempForm.method = "POST";
-  tempForm.action = SCRIPT_URL;
-  tempForm.target = iframeName;
-  tempForm.style.display = "none";
+    function cleanup() {
+      window.removeEventListener("message", handleMessage);
+      window.clearTimeout(timeoutId);
+      tempForm.remove();
+      iframe.remove();
+    }
 
-  Object.entries(payload).forEach(([key, value]) => {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = key;
-    input.value = value;
-    tempForm.appendChild(input);
+    function handleMessage(event) {
+      const data = event.data;
+
+      if (!data || data.source !== "repocomment-form" || data.requestId !== requestId) {
+        return;
+      }
+
+      cleanup();
+
+      if (data.success) {
+        resolve(data);
+      } else {
+        reject(new Error(data.message || "Could not save right now."));
+      }
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Could not confirm the save. Please try again."));
+    }, 10000);
+
+    iframe.name = iframeName;
+    iframe.style.display = "none";
+
+    tempForm.method = "POST";
+    tempForm.action = SCRIPT_URL;
+    tempForm.target = iframeName;
+    tempForm.style.display = "none";
+
+    Object.entries({
+      ...payload,
+      requestId
+    }).forEach(([key, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = key;
+      input.value = value;
+      tempForm.appendChild(input);
+    });
+
+    window.addEventListener("message", handleMessage);
+    document.body.appendChild(iframe);
+    document.body.appendChild(tempForm);
+    tempForm.submit();
   });
-
-  document.body.appendChild(iframe);
-  document.body.appendChild(tempForm);
-  tempForm.submit();
-
-  window.setTimeout(() => {
-    tempForm.remove();
-    iframe.remove();
-  }, 5000);
 }
 
 function setStatus(message, type = "") {
@@ -92,7 +124,7 @@ function showFlash(type, message) {
 
   flashIndicator.className = `flash-indicator ${type} visible`;
   flashIndicator.setAttribute("aria-hidden", "false");
-  flashIcon.textContent = type === "success" ? "✓" : "✕";
+  flashIcon.innerHTML = type === "success" ? "&#10003;" : "&#10005;";
   flashText.textContent = message;
 
   flashTimeoutId = window.setTimeout(() => {
@@ -105,25 +137,31 @@ function sanitizeInitials(value) {
   return value.replace(/[^A-Za-z]/g, "").toUpperCase().slice(0, 2);
 }
 
+function syncCommentLength() {
+  reasonInput.value = reasonInput.value.slice(0, MAX_COMMENT_LENGTH);
+  charCount.textContent = `${reasonInput.value.length} / ${MAX_COMMENT_LENGTH}`;
+}
+
 initialsInput.addEventListener("input", () => {
   initialsInput.value = sanitizeInitials(initialsInput.value);
 });
 
-reasonInput.addEventListener("input", () => {
-  charCount.textContent = `${reasonInput.value.length} / 200`;
-});
+reasonInput.addEventListener("input", syncCommentLength);
 
 versionText.textContent = APP_VERSION;
+syncCommentLength();
 renderCaptcha();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const initials = sanitizeInitials(initialsInput.value.trim());
-  const reason = reasonInput.value.trim();
+  const reason = reasonInput.value.trim().slice(0, MAX_COMMENT_LENGTH);
   const captchaAnswer = captchaInput.value.trim();
 
   initialsInput.value = initials;
+  reasonInput.value = reason;
+  syncCommentLength();
 
   if (!initialsPattern.test(initials)) {
     setStatus("Please enter exactly 2 letters for initials.", "error");
@@ -133,12 +171,6 @@ form.addEventListener("submit", async (event) => {
 
   if (!reason) {
     setStatus("Please enter a comment.", "error");
-    reasonInput.focus();
-    return;
-  }
-
-  if (reason.length > 200) {
-    setStatus("Comment must be 200 characters or fewer.", "error");
     reasonInput.focus();
     return;
   }
@@ -157,7 +189,7 @@ form.addEventListener("submit", async (event) => {
   setStatus("Saving your entry...");
 
   try {
-    postWithHiddenForm({
+    await postWithHiddenForm({
       initials,
       reason,
       captchaAnswer,
@@ -169,12 +201,12 @@ form.addEventListener("submit", async (event) => {
     setStatus("Thank you for your submission.", "success");
     showFlash("success", "Saved");
     form.reset();
-    charCount.textContent = "0 / 200";
+    syncCommentLength();
     captchaValues = createCaptcha();
     renderCaptcha();
     initialsInput.focus();
   } catch (error) {
-    setStatus("Could not save right now. Please check the Apps Script deployment settings.", "error");
+    setStatus(error.message || "Could not save right now.", "error");
     showFlash("error", "Not saved");
     console.error(error);
   } finally {
