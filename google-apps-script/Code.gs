@@ -1,6 +1,6 @@
 // v1.13 - 2026-04-04 9:28 AM ET
 var QUEUE_SHEET_NAME = "Incoming";
-var FINAL_SHEET_NAME = "Comments";
+var FINAL_SHEET_NAME = "Sheet1";
 var QUEUE_HEADERS = [
   "Queued At",
   "Request Id",
@@ -13,7 +13,8 @@ var QUEUE_HEADERS = [
 var FINAL_HEADERS = [
   "Timestamp",
   "Initials",
-  "Comment"
+  "Comment",
+  "ALERT ON DATE"
 ];
 
 function doPost(e) {
@@ -143,7 +144,7 @@ function processQueue() {
     }
 
     finalSheet
-      .getRange(finalSheet.getLastRow() + 1, 1, finalRows.length, FINAL_HEADERS.length)
+      .getRange(finalSheet.getLastRow() + 1, 1, finalRows.length, 3)
       .setValues(finalRows);
 
     processedRows.forEach(function(rowNumber) {

@@ -15,7 +15,8 @@ Known-good baseline:
 For higher burst traffic, the Apps Script backend can use:
 
 - `Incoming` sheet tab for queued submissions
-- `Comments` sheet tab for processed submissions
+- `Sheet1` for processed submissions in columns A-C
+- column D on `Sheet1` remains available for `ALERT ON DATE`
 
 After pasting the latest `google-apps-script/Code.gs`, run `createQueueTrigger()` once in Apps Script to create the 1-minute processing trigger.
 
