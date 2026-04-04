@@ -10,6 +10,12 @@ Known-good baseline:
 - Tag: `milestone-1`
 - Commit: `2c170c2`
 
+Current recommended recovery point:
+
+- Release: `Milestone 2`
+- Tag: `milestone-2`
+- Commit: `f23af14`
+
 ## Queue Mode
 
 For higher burst traffic, the Apps Script backend can use:
