@@ -1,21 +1,11 @@
-// v1.15 - 2026-04-04 12:15 PM ET
+// v1.16 - 2026-04-04 12:27 PM ET
 var QUEUE_SHEET_NAME = "Incoming";
 var FINAL_SHEET_NAME = "Sheet1";
-var EVENT_MODE = false;
-var EVENT_CODE = "";
-var EVENT_START = "";
-var EVENT_END = "";
-// Example party config:
-// var EVENT_MODE = true;
-// var EVENT_CODE = "PARTY2026";
-// var EVENT_START = "2026-04-20T18:00:00";
-// var EVENT_END = "2026-04-20T22:00:00";
 var QUEUE_HEADERS = [
   "Queued At",
   "Request Id",
   "Initials",
   "Comment",
-  "Event Code",
   "Status",
   "Processed At",
   "Error"
@@ -24,8 +14,7 @@ var FINAL_HEADERS = [
   "Timestamp",
   "Initials",
   "Comment",
-  "ALERT ON DATE",
-  "EVENT CODE"
+  "ALERT ON DATE"
 ];
 
 function doPost(e) {
@@ -36,7 +25,6 @@ function doPost(e) {
 
     var initials = ((e.parameter.initials || "") + "").trim().toUpperCase();
     var comment = ((e.parameter.reason || "") + "").trim();
-    var eventCode = ((e.parameter.eventCode || "") + "").trim();
     var captchaAnswer = parseInt((e.parameter.captchaAnswer || "") + "", 10);
     var captchaFirst = parseInt((e.parameter.captchaFirst || "") + "", 10);
     var captchaSecond = parseInt((e.parameter.captchaSecond || "") + "", 10);
@@ -60,14 +48,6 @@ function doPost(e) {
         success: false,
         requestId: requestId,
         message: "Please enter a comment."
-      });
-    }
-
-    if (!isEventAccessAllowed_(eventCode)) {
-      return submitResponse_({
-        success: false,
-        requestId: requestId,
-        message: "Event access is not available right now."
       });
     }
 
@@ -101,7 +81,6 @@ function doPost(e) {
         requestId || Utilities.getUuid(),
         initials,
         comment,
-        eventCode,
         "QUEUED",
         "",
         ""
@@ -146,8 +125,7 @@ function processQueue() {
       var queuedAt = row[0];
       var initials = row[2];
       var comment = row[3];
-      var eventCode = row[4];
-      var status = row[5];
+      var status = row[4];
 
       if (status && status !== "QUEUED") {
         return;
@@ -156,9 +134,7 @@ function processQueue() {
       finalRows.push([
         queuedAt || new Date(),
         initials,
-        comment,
-        "",
-        eventCode
+        comment
       ]);
       processedRows.push(index + 2);
     });
@@ -168,11 +144,11 @@ function processQueue() {
     }
 
     finalSheet
-      .getRange(finalSheet.getLastRow() + 1, 1, finalRows.length, 5)
+      .getRange(finalSheet.getLastRow() + 1, 1, finalRows.length, 3)
       .setValues(finalRows);
 
     processedRows.forEach(function(rowNumber) {
-      queueSheet.getRange(rowNumber, 6, 1, 3).setValues([[
+      queueSheet.getRange(rowNumber, 5, 1, 3).setValues([[
         "PROCESSED",
         new Date(),
         ""
@@ -196,46 +172,7 @@ function createQueueTrigger() {
   }
 }
 
-function isEventAccessAllowed_(eventCode) {
-  var now = new Date();
-  var start = parseEventDate_(EVENT_START);
-  var finish = parseEventDate_(EVENT_END);
-
-  if (!EVENT_MODE) {
-    return true;
-  }
-
-  if (!EVENT_CODE || eventCode !== EVENT_CODE) {
-    return false;
-  }
-
-  if (start && now < start) {
-    return false;
-  }
-
-  if (finish && now > finish) {
-    return false;
-  }
-
-  return true;
-}
-
-function parseEventDate_(value) {
-  if (!value) {
-    return null;
-  }
-
-  var parsed = new Date(value);
-  return isNaN(parsed.getTime()) ? null : parsed;
-}
-
-function doGet(e) {
-  if (((e && e.parameter && e.parameter.mode) || "") === "config") {
-    return jsonResponse_({
-      eventMode: EVENT_MODE
-    });
-  }
-
+function doGet() {
   return jsonResponse_({
     success: true,
     message: "Apps Script is running."

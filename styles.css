@@ -118,17 +118,6 @@ textarea {
   text-align: right;
 }
 
-.event-banner {
-  margin: 0 0 18px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(29, 107, 87, 0.12);
-  border: 1px solid rgba(29, 107, 87, 0.22);
-  color: var(--accent);
-  font-weight: 700;
-  text-align: center;
-}
-
 .flash-indicator {
   position: fixed;
   top: 50%;
@@ -188,24 +177,6 @@ textarea {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-}
-
-.event-panel {
-  margin: 4px 0 8px;
-  padding: 14px 16px;
-  border: 1px dashed rgba(29, 107, 87, 0.28);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.45);
-}
-
-.event-panel summary {
-  cursor: pointer;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.event-panel[open] summary {
-  margin-bottom: 12px;
 }
 
 button {
