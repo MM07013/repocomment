@@ -1,5 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQA4vGm-GUmG5up12ruF58krwrdyEA1jgQ2_R6-25YQB5Hk-BX24IvtsmtLXSSNkK/exec";
-const APP_VERSION = "v1.12 - 2026-04-04 9:12 AM ET";
+const APP_VERSION = "v1.13 - 2026-04-04 9:28 AM ET";
 const MAX_COMMENT_LENGTH = 200;
 
 const form = document.getElementById("entry-form");

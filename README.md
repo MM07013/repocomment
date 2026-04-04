@@ -10,6 +10,15 @@ Known-good baseline:
 - Tag: `milestone-1`
 - Commit: `2c170c2`
 
+## Queue Mode
+
+For higher burst traffic, the Apps Script backend can use:
+
+- `Incoming` sheet tab for queued submissions
+- `Comments` sheet tab for processed submissions
+
+After pasting the latest `google-apps-script/Code.gs`, run `createQueueTrigger()` once in Apps Script to create the 1-minute processing trigger.
+
 ## What This Saves
 
 Each submission is stored in this order:
