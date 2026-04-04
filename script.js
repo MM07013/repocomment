@@ -1,10 +1,11 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQA4vGm-GUmG5up12ruF58krwrdyEA1jgQ2_R6-25YQB5Hk-BX24IvtsmtLXSSNkK/exec";
-const APP_VERSION = "v1.13 - 2026-04-04 9:28 AM ET";
+const APP_VERSION = "v1.14 - 2026-04-04 12:06 PM ET";
 const MAX_COMMENT_LENGTH = 200;
 
 const form = document.getElementById("entry-form");
 const initialsInput = document.getElementById("initials");
 const reasonInput = document.getElementById("reason");
+const eventCodeInput = document.getElementById("event-code");
 const captchaInput = document.getElementById("captcha");
 const captchaQuestion = document.getElementById("captcha-question");
 const statusText = document.getElementById("form-status");
@@ -157,6 +158,7 @@ form.addEventListener("submit", async (event) => {
 
   const initials = sanitizeInitials(initialsInput.value.trim());
   const reason = reasonInput.value.trim().slice(0, MAX_COMMENT_LENGTH);
+  const eventCode = eventCodeInput.value.trim();
   const captchaAnswer = captchaInput.value.trim();
 
   initialsInput.value = initials;
@@ -192,6 +194,7 @@ form.addEventListener("submit", async (event) => {
     await postWithHiddenForm({
       initials,
       reason,
+      eventCode,
       captchaAnswer,
       captchaFirst: String(captchaValues.first),
       captchaSecond: String(captchaValues.second),

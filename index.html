@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=1.13">
+  <link rel="stylesheet" href="styles.css?v=1.14">
 </head>
 <body>
   <main class="page-shell">
@@ -50,6 +50,20 @@
           <p id="char-count" class="char-count">0 / 200</p>
         </div>
 
+        <details class="event-panel">
+          <summary>Event access</summary>
+          <label for="event-code">Event Code</label>
+          <input
+            id="event-code"
+            name="event-code"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            placeholder="Enter event code if provided"
+          >
+          <p class="hint">Leave this blank unless you were given an event code.</p>
+        </details>
+
         <label for="captcha">
           Math Check
           <span id="captcha-question" class="captcha-question"></span>
@@ -69,10 +83,10 @@
       </form>
 
       <p id="form-status" class="status" aria-live="polite"></p>
-      <p id="app-version" class="version">v1.13 - 2026-04-04 9:28 AM ET</p>
+      <p id="app-version" class="version">v1.14 - 2026-04-04 12:06 PM ET</p>
     </section>
   </main>
 
-  <script src="script.js?v=1.13"></script>
+  <script src="script.js?v=1.14"></script>
 </body>
 </html>

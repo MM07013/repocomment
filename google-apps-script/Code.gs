@@ -1,6 +1,10 @@
-// v1.13 - 2026-04-04 9:28 AM ET
+// v1.14 - 2026-04-04 12:06 PM ET
 var QUEUE_SHEET_NAME = "Incoming";
 var FINAL_SHEET_NAME = "Sheet1";
+var EVENT_MODE = false;
+var EVENT_CODE = "";
+var EVENT_START = "";
+var EVENT_END = "";
 var QUEUE_HEADERS = [
   "Queued At",
   "Request Id",
@@ -25,6 +29,7 @@ function doPost(e) {
 
     var initials = ((e.parameter.initials || "") + "").trim().toUpperCase();
     var comment = ((e.parameter.reason || "") + "").trim();
+    var eventCode = ((e.parameter.eventCode || "") + "").trim();
     var captchaAnswer = parseInt((e.parameter.captchaAnswer || "") + "", 10);
     var captchaFirst = parseInt((e.parameter.captchaFirst || "") + "", 10);
     var captchaSecond = parseInt((e.parameter.captchaSecond || "") + "", 10);
@@ -48,6 +53,14 @@ function doPost(e) {
         success: false,
         requestId: requestId,
         message: "Please enter a comment."
+      });
+    }
+
+    if (!isEventAccessAllowed_(eventCode)) {
+      return submitResponse_({
+        success: false,
+        requestId: requestId,
+        message: "Event access is not available right now."
       });
     }
 
@@ -170,6 +183,39 @@ function createQueueTrigger() {
       .everyMinutes(1)
       .create();
   }
+}
+
+function isEventAccessAllowed_(eventCode) {
+  var now = new Date();
+  var start = parseEventDate_(EVENT_START);
+  var finish = parseEventDate_(EVENT_END);
+
+  if (!EVENT_MODE) {
+    return true;
+  }
+
+  if (!EVENT_CODE || eventCode !== EVENT_CODE) {
+    return false;
+  }
+
+  if (start && now < start) {
+    return false;
+  }
+
+  if (finish && now > finish) {
+    return false;
+  }
+
+  return true;
+}
+
+function parseEventDate_(value) {
+  if (!value) {
+    return null;
+  }
+
+  var parsed = new Date(value);
+  return isNaN(parsed.getTime()) ? null : parsed;
 }
 
 function doGet() {

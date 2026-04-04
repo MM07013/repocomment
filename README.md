@@ -20,6 +20,15 @@ For higher burst traffic, the Apps Script backend can use:
 
 After pasting the latest `google-apps-script/Code.gs`, run `createQueueTrigger()` once in Apps Script to create the 1-minute processing trigger.
 
+## Event Mode
+
+Optional event gating is controlled in `google-apps-script/Code.gs`:
+
+- `EVENT_MODE = false` keeps normal family use unchanged
+- `EVENT_MODE = true` requires a shared event code
+- `EVENT_CODE` sets the shared code
+- `EVENT_START` and `EVENT_END` can limit access to a time window
+
 ## What This Saves
 
 Each submission is stored in this order:

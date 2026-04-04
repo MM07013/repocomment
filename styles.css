@@ -179,6 +179,24 @@ textarea {
   gap: 12px;
 }
 
+.event-panel {
+  margin: 4px 0 8px;
+  padding: 14px 16px;
+  border: 1px dashed rgba(29, 107, 87, 0.28);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.event-panel summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.event-panel[open] summary {
+  margin-bottom: 12px;
+}
+
 button {
   margin-top: 8px;
   border: 0;
