@@ -1,10 +1,15 @@
-// v1.14 - 2026-04-04 12:06 PM ET
+// v1.15 - 2026-04-04 12:15 PM ET
 var QUEUE_SHEET_NAME = "Incoming";
 var FINAL_SHEET_NAME = "Sheet1";
 var EVENT_MODE = false;
 var EVENT_CODE = "";
 var EVENT_START = "";
 var EVENT_END = "";
+// Example party config:
+// var EVENT_MODE = true;
+// var EVENT_CODE = "PARTY2026";
+// var EVENT_START = "2026-04-20T18:00:00";
+// var EVENT_END = "2026-04-20T22:00:00";
 var QUEUE_HEADERS = [
   "Queued At",
   "Request Id",
@@ -218,7 +223,13 @@ function parseEventDate_(value) {
   return isNaN(parsed.getTime()) ? null : parsed;
 }
 
-function doGet() {
+function doGet(e) {
+  if (((e && e.parameter && e.parameter.mode) || "") === "config") {
+    return jsonResponse_({
+      eventMode: EVENT_MODE
+    });
+  }
+
   return jsonResponse_({
     success: true,
     message: "Apps Script is running."

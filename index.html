@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=1.14">
+  <link rel="stylesheet" href="styles.css?v=1.15">
 </head>
 <body>
   <main class="page-shell">
@@ -15,6 +15,10 @@
       <div id="flash-indicator" class="flash-indicator" aria-live="polite" aria-hidden="true">
         <div id="flash-icon" class="flash-icon"></div>
         <p id="flash-text" class="flash-text"></p>
+      </div>
+
+      <div id="event-banner" class="event-banner" hidden>
+        Event code required for this submission.
       </div>
 
       <p class="eyebrow">Simple Submission</p>
@@ -50,7 +54,7 @@
           <p id="char-count" class="char-count">0 / 200</p>
         </div>
 
-        <details class="event-panel">
+        <details id="event-panel" class="event-panel">
           <summary>Event access</summary>
           <label for="event-code">Event Code</label>
           <input
@@ -83,10 +87,10 @@
       </form>
 
       <p id="form-status" class="status" aria-live="polite"></p>
-      <p id="app-version" class="version">v1.14 - 2026-04-04 12:06 PM ET</p>
+      <p id="app-version" class="version">v1.15 - 2026-04-04 12:15 PM ET</p>
     </section>
   </main>
 
-  <script src="script.js?v=1.14"></script>
+  <script src="script.js?v=1.15"></script>
 </body>
 </html>

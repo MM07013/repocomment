@@ -118,6 +118,17 @@ textarea {
   text-align: right;
 }
 
+.event-banner {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(29, 107, 87, 0.12);
+  border: 1px solid rgba(29, 107, 87, 0.22);
+  color: var(--accent);
+  font-weight: 700;
+  text-align: center;
+}
+
 .flash-indicator {
   position: fixed;
   top: 50%;

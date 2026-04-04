@@ -1,10 +1,12 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQA4vGm-GUmG5up12ruF58krwrdyEA1jgQ2_R6-25YQB5Hk-BX24IvtsmtLXSSNkK/exec";
-const APP_VERSION = "v1.14 - 2026-04-04 12:06 PM ET";
+const APP_VERSION = "v1.15 - 2026-04-04 12:15 PM ET";
 const MAX_COMMENT_LENGTH = 200;
 
 const form = document.getElementById("entry-form");
 const initialsInput = document.getElementById("initials");
 const reasonInput = document.getElementById("reason");
+const eventPanel = document.getElementById("event-panel");
+const eventBanner = document.getElementById("event-banner");
 const eventCodeInput = document.getElementById("event-code");
 const captchaInput = document.getElementById("captcha");
 const captchaQuestion = document.getElementById("captcha-question");
@@ -50,6 +52,22 @@ function createCaptcha() {
 
 function renderCaptcha() {
   captchaQuestion.textContent = `${captchaValues.first} ${captchaValues.operator} ${captchaValues.second} = ?`;
+}
+
+async function loadEventMode() {
+  try {
+    const response = await fetch(`${SCRIPT_URL}?mode=config`, {
+      method: "GET"
+    });
+    const data = await response.json();
+
+    if (data && data.eventMode) {
+      eventBanner.hidden = false;
+      eventPanel.open = true;
+    }
+  } catch (error) {
+    console.error("Could not load event configuration.", error);
+  }
 }
 
 function postWithHiddenForm(payload) {
@@ -152,6 +170,7 @@ reasonInput.addEventListener("input", syncCommentLength);
 versionText.textContent = APP_VERSION;
 syncCommentLength();
 renderCaptcha();
+loadEventMode();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
