@@ -16,6 +16,12 @@ Current recommended recovery point:
 - Tag: `milestone-2`
 - Commit: `f23af14`
 
+Latest recommended recovery point:
+
+- Release: `milestone-purple`
+- Tag: `milestone-purple`
+- Commit: `173d423`
+
 ## Queue Mode
 
 For higher burst traffic, the Apps Script backend can use:
