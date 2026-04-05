@@ -1,5 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhQA4vGm-GUmG5up12ruF58krwrdyEA1jgQ2_R6-25YQB5Hk-BX24IvtsmtLXSSNkK/exec";
-const APP_VERSION = "v1.16 - 2026-04-04 12:27 PM ET";
+const APP_VERSION = "v2.0 - 2026-04-05";
 const MAX_COMMENT_LENGTH = 200;
 
 const form = document.getElementById("entry-form");
@@ -142,15 +142,39 @@ function syncCommentLength() {
   charCount.textContent = `${reasonInput.value.length} / ${MAX_COMMENT_LENGTH}`;
 }
 
+function isFormReady() {
+  const initials = sanitizeInitials(initialsInput.value.trim());
+  const reason = reasonInput.value.trim();
+  const captchaAnswer = captchaInput.value.trim();
+
+  return (
+    initialsPattern.test(initials) &&
+    reason.length > 0 &&
+    reason.length <= MAX_COMMENT_LENGTH &&
+    captchaAnswer !== "" &&
+    Number(captchaAnswer) === captchaValues.answer
+  );
+}
+
+function updateSubmitState() {
+  const ready = isFormReady();
+  submitButton.disabled = !ready;
+  submitButton.classList.toggle("is-ready", ready);
+}
+
 initialsInput.addEventListener("input", () => {
   initialsInput.value = sanitizeInitials(initialsInput.value);
+  updateSubmitState();
 });
 
 reasonInput.addEventListener("input", syncCommentLength);
+reasonInput.addEventListener("input", updateSubmitState);
+captchaInput.addEventListener("input", updateSubmitState);
 
 versionText.textContent = APP_VERSION;
 syncCommentLength();
 renderCaptcha();
+updateSubmitState();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -181,6 +205,7 @@ form.addEventListener("submit", async (event) => {
     captchaValues = createCaptcha();
     renderCaptcha();
     captchaInput.value = "";
+    updateSubmitState();
     captchaInput.focus();
     return;
   }
@@ -204,12 +229,13 @@ form.addEventListener("submit", async (event) => {
     syncCommentLength();
     captchaValues = createCaptcha();
     renderCaptcha();
+    updateSubmitState();
     initialsInput.focus();
   } catch (error) {
     setStatus(error.message || "Could not save right now.", "error");
     showFlash("error", "Not saved");
     console.error(error);
   } finally {
-    submitButton.disabled = false;
+    updateSubmitState();
   }
 });

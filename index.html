@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=1.16">
+  <link rel="stylesheet" href="styles.css?v=2.0">
 </head>
 <body>
   <main class="page-shell">
@@ -19,9 +19,6 @@
 
       <p class="eyebrow">Simple Submission</p>
       <h1>Share Your Initials And Comment</h1>
-      <p class="intro">
-        Enter exactly 2 letters for initials and a short comment up to 200 characters.
-      </p>
 
       <form id="entry-form" novalidate>
         <label for="initials">Initials</label>
@@ -50,29 +47,29 @@
           <p id="char-count" class="char-count">0 / 200</p>
         </div>
 
-        <label for="captcha">
-          Math Check
+        <label for="captcha">Math Check</label>
+        <div class="captcha-row">
           <span id="captcha-question" class="captcha-question"></span>
-        </label>
-        <input
-          id="captcha"
-          name="captcha"
-          type="text"
-          inputmode="numeric"
-          autocomplete="off"
-          placeholder="Enter the answer"
-          required
-        >
+          <input
+            id="captcha"
+            name="captcha"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="Answer"
+            required
+          >
+        </div>
         <p class="hint">Solve the math question before submitting.</p>
 
         <button id="submit-button" type="submit">Save</button>
       </form>
 
       <p id="form-status" class="status" aria-live="polite"></p>
-      <p id="app-version" class="version">v1.16 - 2026-04-04 12:27 PM ET</p>
+      <p id="app-version" class="version">v2.0 - 2026-04-05</p>
     </section>
   </main>
 
-  <script src="script.js?v=1.16"></script>
+  <script src="script.js?v=2.0"></script>
 </body>
 </html>

@@ -4,8 +4,8 @@
   --card: rgba(255, 252, 247, 0.92);
   --text: #1f2a24;
   --muted: #5d6b63;
-  --accent: #1d6b57;
-  --accent-hover: #145443;
+  --accent: #8b3dff;
+  --accent-hover: #6f22e6;
   --border: rgba(31, 42, 36, 0.12);
   --error: #b33939;
   --success: #17663d;
@@ -40,13 +40,13 @@ body {
   border: 1px solid var(--border);
   border-radius: 28px;
   box-shadow: var(--shadow);
-  padding: 32px 24px;
+  padding: 22px 18px 14px;
 }
 
 .eyebrow {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--accent);
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -54,23 +54,23 @@ body {
 
 h1 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 2.7rem);
-  line-height: 1.02;
+  font-size: clamp(2.1rem, 4vw, 2.6rem);
+  line-height: 0.98;
 }
 
 .intro {
-  margin: 14px 0 24px;
+  margin: 10px 0 16px;
   color: var(--muted);
-  line-height: 1.55;
+  line-height: 1.45;
 }
 
 form {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 label {
-  margin-top: 6px;
+  margin-top: 4px;
   font-weight: 700;
 }
 
@@ -85,7 +85,7 @@ textarea {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   background: rgba(255, 255, 255, 0.88);
   color: var(--text);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
@@ -100,7 +100,7 @@ textarea:focus {
 }
 
 textarea {
-  min-height: 132px;
+  min-height: 118px;
   resize: vertical;
 }
 
@@ -108,11 +108,11 @@ textarea {
 .char-count,
 .status {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 
 .version {
-  margin: 18px 0 0;
+  margin: 14px 0 0;
   color: var(--muted);
   font-size: 0.8rem;
   text-align: right;
@@ -163,9 +163,30 @@ textarea {
 
 .captcha-question {
   display: inline-block;
-  margin-left: 8px;
   color: var(--accent);
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.captcha-row {
+  display: inline-grid;
+  grid-template-columns: auto 120px;
+  align-items: center;
+  justify-content: start;
+  gap: 6px;
+}
+
+.captcha-row input {
+  text-align: center;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+@media (max-width: 420px) {
+  .captcha-row {
+    grid-template-columns: auto 108px;
+    gap: 6px;
+  }
 }
 
 .hint,
@@ -176,36 +197,47 @@ textarea {
 .meta-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
 }
 
 button {
-  margin-top: 8px;
+  margin-top: 6px;
   border: 0;
   border-radius: 999px;
   padding: 14px 18px;
-  background: var(--accent);
+  background: #b6bdb8;
   color: #fff;
   font-weight: 700;
-  cursor: pointer;
+  cursor: not-allowed;
   transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 14px 24px rgba(63, 74, 68, 0.16);
+}
+
+button.is-ready {
+  background: var(--accent);
+  cursor: pointer;
   box-shadow: 0 14px 24px rgba(29, 107, 87, 0.2);
 }
 
-button:hover {
+button.is-ready:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
 }
 
 button:disabled {
-  opacity: 0.7;
-  cursor: wait;
+  opacity: 1;
   transform: none;
+}
+
+button.is-ready:disabled {
+  opacity: 0.82;
+  cursor: wait;
 }
 
 .status {
   min-height: 24px;
-  margin-top: 16px;
+  margin-top: 10px;
   font-weight: 500;
 }
 
@@ -219,12 +251,11 @@ button:disabled {
 
 @media (max-width: 600px) {
   .card {
-    padding: 28px 18px;
+    padding: 18px 14px 12px;
     border-radius: 22px;
   }
 
   .meta-row {
-    flex-direction: column;
-    gap: 4px;
+    gap: 8px;
   }
 }
