@@ -164,6 +164,14 @@ function updateSubmitState() {
   submitButton.classList.toggle("is-ready", ready);
 }
 
+function getTurnstileToken() {
+  if (!window.turnstile || typeof window.turnstile.getResponse !== "function") {
+    return "";
+  }
+
+  return window.turnstile.getResponse() || "";
+}
+
 initialsInput.addEventListener("input", () => {
   initialsInput.value = sanitizeInitials(initialsInput.value);
   updateSubmitState();
@@ -220,6 +228,12 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
+  if (!getTurnstileToken()) {
+    setStatus("Please complete the security check.", "error");
+    showFlash("error", "Check required");
+    return;
+  }
+
   submitButton.disabled = true;
   setStatus("Saving your entry...");
 
@@ -232,7 +246,8 @@ form.addEventListener("submit", async (event) => {
       captchaSecond: String(captchaValues.second),
       captchaOperator: captchaValues.operator,
       website,
-      formFilledMs: String(formFilledMs)
+      formFilledMs: String(formFilledMs),
+      turnstileToken: getTurnstileToken()
     });
 
     setStatus("Thank you for your submission.", "success");
@@ -241,11 +256,17 @@ form.addEventListener("submit", async (event) => {
     syncCommentLength();
     captchaValues = createCaptcha();
     renderCaptcha();
+    if (window.turnstile && typeof window.turnstile.reset === "function") {
+      window.turnstile.reset();
+    }
     updateSubmitState();
     initialsInput.focus();
   } catch (error) {
     setStatus(error.message || "Could not save right now.", "error");
     showFlash("error", "Not saved");
+    if (window.turnstile && typeof window.turnstile.reset === "function") {
+      window.turnstile.reset();
+    }
     console.error(error);
   } finally {
     updateSubmitState();

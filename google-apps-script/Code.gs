@@ -4,12 +4,15 @@
 // - minimum form fill time check
 // - short burst rate limiting
 // - duplicate and repeated-pattern spam rejection
+// - Cloudflare Turnstile server-side validation
 var QUEUE_SHEET_NAME = "Incoming";
 var FINAL_SHEET_NAME = "Sheet1";
 var MIN_FORM_FILL_MS = 2500;
 var MAX_FORM_FILL_MS = 60 * 60 * 1000;
 var MAX_POSTS_PER_10_SECONDS = 4;
 var MAX_POSTS_PER_MINUTE = 12;
+var TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+var TURNSTILE_SECRET_PROPERTY = "TURNSTILE_SECRET_KEY";
 var QUEUE_HEADERS = [
   "Queued At",
   "Request Id",
@@ -40,8 +43,10 @@ function doPost(e) {
     var captchaOperator = ((e.parameter.captchaOperator || "") + "").trim();
     var website = ((e.parameter.website || "") + "").trim();
     var formFilledMs = parseInt((e.parameter.formFilledMs || "") + "", 10);
+    var turnstileToken = ((e.parameter.turnstileToken || "") + "").trim();
     var requestId = ((e.parameter.requestId || "") + "").trim();
     var expectedCaptchaAnswer;
+    var turnstileResult;
     var lock = LockService.getDocumentLock();
 
     if (!/^[A-Z]{2}$/.test(initials)) {
@@ -105,6 +110,15 @@ function doPost(e) {
         success: false,
         requestId: requestId,
         message: "Comment looks like spam."
+      });
+    }
+
+    turnstileResult = verifyTurnstileToken_(turnstileToken, requestId);
+    if (!turnstileResult.success) {
+      return submitResponse_({
+        success: false,
+        requestId: requestId,
+        message: "Security check failed. Please try again."
       });
     }
 
@@ -213,6 +227,37 @@ function createQueueTrigger() {
       .everyMinutes(1)
       .create();
   }
+}
+
+function verifyTurnstileToken_(token, requestId) {
+  var secret = PropertiesService.getScriptProperties().getProperty(TURNSTILE_SECRET_PROPERTY);
+  var response;
+  var payload;
+
+  if (!secret) {
+    throw new Error("Missing Turnstile secret in Script Properties.");
+  }
+
+  if (!token) {
+    return {
+      success: false
+    };
+  }
+
+  response = UrlFetchApp.fetch(TURNSTILE_VERIFY_URL, {
+    method: "post",
+    payload: {
+      secret: secret,
+      response: token,
+      idempotency_key: requestId || Utilities.getUuid()
+    },
+    muteHttpExceptions: true
+  });
+
+  payload = JSON.parse(response.getContentText() || "{}");
+  return {
+    success: !!payload.success
+  };
 }
 
 function allowSubmission_(initials, comment) {
