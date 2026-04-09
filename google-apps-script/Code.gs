@@ -1,6 +1,15 @@
-// v1.16 - 2026-04-04 12:27 PM ET
+// v1.17 - 2026-04-08 11:10 AM ET
+// Anti-spam hardening update:
+// - honeypot field check
+// - minimum form fill time check
+// - short burst rate limiting
+// - duplicate and repeated-pattern spam rejection
 var QUEUE_SHEET_NAME = "Incoming";
 var FINAL_SHEET_NAME = "Sheet1";
+var MIN_FORM_FILL_MS = 2500;
+var MAX_FORM_FILL_MS = 60 * 60 * 1000;
+var MAX_POSTS_PER_10_SECONDS = 4;
+var MAX_POSTS_PER_MINUTE = 12;
 var QUEUE_HEADERS = [
   "Queued At",
   "Request Id",
@@ -29,6 +38,8 @@ function doPost(e) {
     var captchaFirst = parseInt((e.parameter.captchaFirst || "") + "", 10);
     var captchaSecond = parseInt((e.parameter.captchaSecond || "") + "", 10);
     var captchaOperator = ((e.parameter.captchaOperator || "") + "").trim();
+    var website = ((e.parameter.website || "") + "").trim();
+    var formFilledMs = parseInt((e.parameter.formFilledMs || "") + "", 10);
     var requestId = ((e.parameter.requestId || "") + "").trim();
     var expectedCaptchaAnswer;
     var lock = LockService.getDocumentLock();
@@ -51,6 +62,22 @@ function doPost(e) {
       });
     }
 
+    if (website) {
+      return submitResponse_({
+        success: false,
+        requestId: requestId,
+        message: "Submission rejected."
+      });
+    }
+
+    if (isNaN(formFilledMs) || formFilledMs < MIN_FORM_FILL_MS || formFilledMs > MAX_FORM_FILL_MS) {
+      return submitResponse_({
+        success: false,
+        requestId: requestId,
+        message: "Please wait a moment and try again."
+      });
+    }
+
     if (captchaOperator === "+") {
       expectedCaptchaAnswer = captchaFirst + captchaSecond;
     } else if (captchaOperator === "-") {
@@ -70,6 +97,22 @@ function doPost(e) {
         success: false,
         requestId: requestId,
         message: "Captcha answer is invalid."
+      });
+    }
+
+    if (looksLikeSpam_(comment)) {
+      return submitResponse_({
+        success: false,
+        requestId: requestId,
+        message: "Comment looks like spam."
+      });
+    }
+
+    if (!allowSubmission_(initials, comment)) {
+      return submitResponse_({
+        success: false,
+        requestId: requestId,
+        message: "Too many submissions right now. Please try again later."
       });
     }
 
@@ -170,6 +213,76 @@ function createQueueTrigger() {
       .everyMinutes(1)
       .create();
   }
+}
+
+function allowSubmission_(initials, comment) {
+  var cache = CacheService.getScriptCache();
+  var now = new Date();
+  var tenSecondBucket = Utilities.formatDate(now, "UTC", "yyyyMMddHHmmss").slice(0, 13);
+  var minuteBucket = Utilities.formatDate(now, "UTC", "yyyyMMddHHmm");
+  var burstKey = "burst10:" + tenSecondBucket;
+  var minuteKey = "burst60:" + minuteBucket;
+  var fingerprint = Utilities.base64EncodeWebSafe(
+    Utilities.computeDigest(
+      Utilities.DigestAlgorithm.SHA_256,
+      (initials + "|" + normalizeComment_(comment)).slice(0, 500)
+    )
+  );
+  var duplicateKey = "dup:" + fingerprint;
+  var current10 = parseInt(cache.get(burstKey) || "0", 10);
+  var current60 = parseInt(cache.get(minuteKey) || "0", 10);
+
+  if (cache.get(duplicateKey)) {
+    return false;
+  }
+
+  if (current10 >= MAX_POSTS_PER_10_SECONDS || current60 >= MAX_POSTS_PER_MINUTE) {
+    return false;
+  }
+
+  cache.put(burstKey, String(current10 + 1), 15);
+  cache.put(minuteKey, String(current60 + 1), 70);
+  cache.put(duplicateKey, "1", 300);
+  return true;
+}
+
+function normalizeComment_(comment) {
+  return String(comment || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function looksLikeSpam_(comment) {
+  var text = normalizeComment_(comment);
+
+  if (!text) {
+    return true;
+  }
+
+  if (/(.)\1{24,}/.test(text)) {
+    return true;
+  }
+
+  if (/(\b\w+\b)(?:\s+\1){7,}/i.test(text)) {
+    return true;
+  }
+
+  if (text.length >= 80 && countUniqueChars_(text.replace(/\s+/g, "")) <= 3) {
+    return true;
+  }
+
+  return false;
+}
+
+function countUniqueChars_(text) {
+  var map = {};
+
+  for (var i = 0; i < text.length; i++) {
+    map[text.charAt(i)] = true;
+  }
+
+  return Object.keys(map).length;
 }
 
 function doGet() {

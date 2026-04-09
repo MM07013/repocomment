@@ -43,6 +43,15 @@ body {
   padding: 22px 18px 14px;
 }
 
+.bot-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: var(--accent);

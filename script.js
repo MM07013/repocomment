@@ -6,6 +6,7 @@ const form = document.getElementById("entry-form");
 const initialsInput = document.getElementById("initials");
 const reasonInput = document.getElementById("reason");
 const captchaInput = document.getElementById("captcha");
+const websiteInput = document.getElementById("website");
 const captchaQuestion = document.getElementById("captcha-question");
 const statusText = document.getElementById("form-status");
 const charCount = document.getElementById("char-count");
@@ -18,6 +19,7 @@ const flashText = document.getElementById("flash-text");
 const initialsPattern = /^[A-Za-z]{2}$/;
 let captchaValues = createCaptcha();
 let flashTimeoutId;
+const formLoadedAt = Date.now();
 
 function createCaptcha() {
   const operators = ["+", "-", "x"];
@@ -182,6 +184,8 @@ form.addEventListener("submit", async (event) => {
   const initials = sanitizeInitials(initialsInput.value.trim());
   const reason = reasonInput.value.trim().slice(0, MAX_COMMENT_LENGTH);
   const captchaAnswer = captchaInput.value.trim();
+  const website = websiteInput.value.trim();
+  const formFilledMs = Date.now() - formLoadedAt;
 
   initialsInput.value = initials;
   reasonInput.value = reason;
@@ -210,6 +214,12 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
+  if (website) {
+    setStatus("Could not save right now.", "error");
+    showFlash("error", "Not saved");
+    return;
+  }
+
   submitButton.disabled = true;
   setStatus("Saving your entry...");
 
@@ -220,7 +230,9 @@ form.addEventListener("submit", async (event) => {
       captchaAnswer,
       captchaFirst: String(captchaValues.first),
       captchaSecond: String(captchaValues.second),
-      captchaOperator: captchaValues.operator
+      captchaOperator: captchaValues.operator,
+      website,
+      formFilledMs: String(formFilledMs)
     });
 
     setStatus("Thank you for your submission.", "success");
