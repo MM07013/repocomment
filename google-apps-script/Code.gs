@@ -5,14 +5,21 @@
 // - short burst rate limiting
 // - duplicate and repeated-pattern spam rejection
 // - Cloudflare Turnstile server-side validation
+// - stricter comment content filtering
+// - Turnstile hostname enforcement
 var QUEUE_SHEET_NAME = "Incoming";
 var FINAL_SHEET_NAME = "Sheet1";
 var MIN_FORM_FILL_MS = 2500;
 var MAX_FORM_FILL_MS = 60 * 60 * 1000;
-var MAX_POSTS_PER_10_SECONDS = 4;
-var MAX_POSTS_PER_MINUTE = 12;
+var MAX_POSTS_PER_10_SECONDS = 2;
+var MAX_POSTS_PER_MINUTE = 6;
 var TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 var TURNSTILE_SECRET_PROPERTY = "TURNSTILE_SECRET_KEY";
+var ALLOWED_TURNSTILE_HOSTNAMES = [
+  "mm07013.github.io",
+  "localhost",
+  "127.0.0.1"
+];
 var QUEUE_HEADERS = [
   "Queued At",
   "Request Id",
@@ -114,7 +121,7 @@ function doPost(e) {
     }
 
     turnstileResult = verifyTurnstileToken_(turnstileToken, requestId);
-    if (!turnstileResult.success) {
+    if (!turnstileResult.success || !isAllowedTurnstileHostname_(turnstileResult.hostname)) {
       return submitResponse_({
         success: false,
         requestId: requestId,
@@ -256,8 +263,14 @@ function verifyTurnstileToken_(token, requestId) {
 
   payload = JSON.parse(response.getContentText() || "{}");
   return {
-    success: !!payload.success
+    success: !!payload.success,
+    hostname: ((payload.hostname || "") + "").toLowerCase(),
+    errorCodes: payload["error-codes"] || []
   };
+}
+
+function isAllowedTurnstileHostname_(hostname) {
+  return ALLOWED_TURNSTILE_HOSTNAMES.indexOf(((hostname || "") + "").toLowerCase()) !== -1;
 }
 
 function allowSubmission_(initials, comment) {
@@ -300,6 +313,11 @@ function normalizeComment_(comment) {
 
 function looksLikeSpam_(comment) {
   var text = normalizeComment_(comment);
+  var compactText = text.replace(/\s+/g, "");
+  var letters = (text.match(/[a-z]/gi) || []).length;
+  var digits = (text.match(/[0-9]/g) || []).length;
+  var safePunctuation = (text.match(/[.,!?:;'"()\/&@#%+\-_]/g) || []).length;
+  var otherSymbols = Math.max(0, compactText.length - letters - digits - safePunctuation);
 
   if (!text) {
     return true;
@@ -313,7 +331,23 @@ function looksLikeSpam_(comment) {
     return true;
   }
 
-  if (text.length >= 80 && countUniqueChars_(text.replace(/\s+/g, "")) <= 3) {
+  if (/([^a-z0-9\s])(?:\s*\1){7,}/i.test(text)) {
+    return true;
+  }
+
+  if (text.length >= 80 && countUniqueChars_(compactText) <= 3) {
+    return true;
+  }
+
+  if (compactText.length >= 20 && letters === 0 && digits === 0) {
+    return true;
+  }
+
+  if (compactText.length >= 30 && otherSymbols > Math.floor(compactText.length * 0.35)) {
+    return true;
+  }
+
+  if (!/^[\x20-\x7E\r\n\t]*$/.test(comment)) {
     return true;
   }
 
