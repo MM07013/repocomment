@@ -1,5 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIosPcw2sChEnVFVaTkayTpxcY3KIyG8j78yHA4-prR8rxfwWYNApGQQ9frz1sc98/exec";
-const APP_VERSION = "v2.7 - 2026-04-30";
+const APP_VERSION = "v2.8 - 2026-04-30";
 const MAX_COMMENT_LENGTH = 200;
 
 const form = document.getElementById("entry-form");
@@ -89,30 +89,65 @@ function postWithHiddenForm(payload) {
 }
 
 function postWithVisibleForm(payload) {
-  const targetName = `submit_window_${Date.now()}`;
-  const popup = window.open("about:blank", targetName);
-  const tempForm = document.createElement("form");
+  return new Promise((resolve, reject) => {
+    const requestId = `submit_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const targetName = `submit_window_${requestId}`;
+    const popup = window.open("about:blank", targetName);
+    const tempForm = document.createElement("form");
+    const timeoutMs = 20000;
 
-  if (!popup) {
-    throw new Error("Please allow pop-ups to complete the save on iPhone Safari.");
-  }
+    if (!popup) {
+      reject(new Error("Please allow pop-ups to complete the save on iPhone Safari."));
+      return;
+    }
 
-  tempForm.method = "POST";
-  tempForm.action = SCRIPT_URL;
-  tempForm.target = targetName;
-  tempForm.style.display = "none";
+    function cleanup() {
+      window.removeEventListener("message", handleMessage);
+      window.clearTimeout(timeoutId);
+      tempForm.remove();
+    }
 
-  Object.entries(payload).forEach(([key, value]) => {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = key;
-    input.value = value;
-    tempForm.appendChild(input);
+    function handleMessage(event) {
+      const data = event.data;
+
+      if (!data || data.source !== "repocomment-form" || data.requestId !== requestId) {
+        return;
+      }
+
+      cleanup();
+
+      if (data.success) {
+        resolve(data);
+      } else {
+        reject(new Error(data.message || "Could not save right now."));
+      }
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Could not confirm the save. Please try again."));
+    }, timeoutMs);
+
+    tempForm.method = "POST";
+    tempForm.action = SCRIPT_URL;
+    tempForm.target = targetName;
+    tempForm.style.display = "none";
+
+    Object.entries({
+      ...payload,
+      requestId
+    }).forEach(([key, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = key;
+      input.value = value;
+      tempForm.appendChild(input);
+    });
+
+    window.addEventListener("message", handleMessage);
+    document.body.appendChild(tempForm);
+    tempForm.submit();
   });
-
-  document.body.appendChild(tempForm);
-  tempForm.submit();
-  tempForm.remove();
 }
 
 function setStatus(message, type = "") {
@@ -231,13 +266,10 @@ form.addEventListener("submit", async (event) => {
     };
 
     if (isLikelyIosSafari()) {
-      postWithVisibleForm(payload);
-      setStatus("A confirmation tab opened. Complete the save there.", "success");
-      showFlash("success", "Opened");
-      return;
+      await postWithVisibleForm(payload);
+    } else {
+      await postWithHiddenForm(payload);
     }
-
-    await postWithHiddenForm(payload);
 
     setStatus("Thank you for your submission.", "success");
     showFlash("success", "Saved");

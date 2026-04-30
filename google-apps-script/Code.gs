@@ -403,6 +403,7 @@ function submitResponse_(payload) {
       '<script>' +
       "if (window.opener) { window.opener.postMessage(" + safePayload + ', "*"); }' +
       "if (window.top && window.top !== window && window.top.postMessage) { window.top.postMessage(" + safePayload + ', "*"); }' +
+      "window.setTimeout(function(){ try { window.close(); } catch (e) {} }, 300);" +
       "</script></body></html>"
     )
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
