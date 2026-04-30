@@ -1,5 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIosPcw2sChEnVFVaTkayTpxcY3KIyG8j78yHA4-prR8rxfwWYNApGQQ9frz1sc98/exec";
-const APP_VERSION = "v2.4 - 2026-04-30";
+const APP_VERSION = "v2.5 - 2026-04-30";
 const MAX_COMMENT_LENGTH = 200;
 
 const form = document.getElementById("entry-form");
@@ -17,6 +17,14 @@ const flashText = document.getElementById("flash-text");
 const initialsPattern = /^[A-Za-z]{2}$/;
 let flashTimeoutId;
 const formLoadedAt = Date.now();
+
+function isLikelyIosSafari() {
+  const ua = window.navigator.userAgent || "";
+  const isIos = /iPhone|iPad|iPod/i.test(ua);
+  const isWebKit = /WebKit/i.test(ua);
+  const isOtherBrowserShell = /CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
+  return isIos && isWebKit && !isOtherBrowserShell;
+}
 
 function postWithHiddenForm(payload) {
   return new Promise((resolve, reject) => {
@@ -77,6 +85,33 @@ function postWithHiddenForm(payload) {
     document.body.appendChild(tempForm);
     tempForm.submit();
   });
+}
+
+function postWithNoCors(payload) {
+  return fetch(SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    body: new URLSearchParams(payload)
+  });
+}
+
+async function submitEntry(payload) {
+  if (isLikelyIosSafari()) {
+    await postWithNoCors(payload);
+    return { mode: "no-cors" };
+  }
+
+  try {
+    await postWithHiddenForm(payload);
+    return { mode: "iframe" };
+  } catch (error) {
+    if (!/Could not confirm the save/i.test(error.message || "")) {
+      throw error;
+    }
+
+    await postWithNoCors(payload);
+    return { mode: "fallback" };
+  }
 }
 
 function setStatus(message, type = "") {
@@ -186,7 +221,7 @@ form.addEventListener("submit", async (event) => {
   setStatus("Saving your entry...");
 
   try {
-    await postWithHiddenForm({
+    const result = await submitEntry({
       initials,
       reason,
       website,
@@ -194,7 +229,12 @@ form.addEventListener("submit", async (event) => {
       turnstileToken: getTurnstileToken()
     });
 
-    setStatus("Thank you for your submission.", "success");
+    if (result.mode === "iframe") {
+      setStatus("Thank you for your submission.", "success");
+    } else {
+      setStatus("Submitted. Please check the sheet in a moment.", "success");
+    }
+
     showFlash("success", "Saved");
     form.reset();
     syncCommentLength();
