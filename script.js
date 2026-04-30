@@ -1,5 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIosPcw2sChEnVFVaTkayTpxcY3KIyG8j78yHA4-prR8rxfwWYNApGQQ9frz1sc98/exec";
-const APP_VERSION = "v2.5 - 2026-04-30";
+const APP_VERSION = "v2.6 - 2026-04-30";
 const MAX_COMMENT_LENGTH = 200;
 
 const form = document.getElementById("entry-form");
@@ -18,20 +18,13 @@ const initialsPattern = /^[A-Za-z]{2}$/;
 let flashTimeoutId;
 const formLoadedAt = Date.now();
 
-function isLikelyIosSafari() {
-  const ua = window.navigator.userAgent || "";
-  const isIos = /iPhone|iPad|iPod/i.test(ua);
-  const isWebKit = /WebKit/i.test(ua);
-  const isOtherBrowserShell = /CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
-  return isIos && isWebKit && !isOtherBrowserShell;
-}
-
 function postWithHiddenForm(payload) {
   return new Promise((resolve, reject) => {
     const requestId = `submit_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const iframeName = `submit_target_${requestId}`;
     const iframe = document.createElement("iframe");
     const tempForm = document.createElement("form");
+    const timeoutMs = 20000;
 
     function cleanup() {
       window.removeEventListener("message", handleMessage);
@@ -59,7 +52,7 @@ function postWithHiddenForm(payload) {
     const timeoutId = window.setTimeout(() => {
       cleanup();
       reject(new Error("Could not confirm the save. Please try again."));
-    }, 10000);
+    }, timeoutMs);
 
     iframe.name = iframeName;
     iframe.style.display = "none";
@@ -85,33 +78,6 @@ function postWithHiddenForm(payload) {
     document.body.appendChild(tempForm);
     tempForm.submit();
   });
-}
-
-function postWithNoCors(payload) {
-  return fetch(SCRIPT_URL, {
-    method: "POST",
-    mode: "no-cors",
-    body: new URLSearchParams(payload)
-  });
-}
-
-async function submitEntry(payload) {
-  if (isLikelyIosSafari()) {
-    await postWithNoCors(payload);
-    return { mode: "no-cors" };
-  }
-
-  try {
-    await postWithHiddenForm(payload);
-    return { mode: "iframe" };
-  } catch (error) {
-    if (!/Could not confirm the save/i.test(error.message || "")) {
-      throw error;
-    }
-
-    await postWithNoCors(payload);
-    return { mode: "fallback" };
-  }
 }
 
 function setStatus(message, type = "") {
@@ -221,7 +187,7 @@ form.addEventListener("submit", async (event) => {
   setStatus("Saving your entry...");
 
   try {
-    const result = await submitEntry({
+    await postWithHiddenForm({
       initials,
       reason,
       website,
@@ -229,12 +195,7 @@ form.addEventListener("submit", async (event) => {
       turnstileToken: getTurnstileToken()
     });
 
-    if (result.mode === "iframe") {
-      setStatus("Thank you for your submission.", "success");
-    } else {
-      setStatus("Submitted. Please check the sheet in a moment.", "success");
-    }
-
+    setStatus("Thank you for your submission.", "success");
     showFlash("success", "Saved");
     form.reset();
     syncCommentLength();
