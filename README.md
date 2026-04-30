@@ -58,7 +58,7 @@ Each submission is stored in this order:
 
 Your frontend is already set to submit to:
 
-`https://script.google.com/macros/s/AKfycbzhQA4vGm-GUmG5up12ruF58krwrdyEA1jgQ2_R6-25YQB5Hk-BX24IvtsmtLXSSNkK/exec`
+`https://script.google.com/macros/s/AKfycbzIosPcw2sChEnVFVaTkayTpxcY3KIyG8j78yHA4-prR8rxfwWYNApGQQ9frz1sc98/exec`
 
 In your Google Sheet:
 
