@@ -170,6 +170,34 @@ textarea {
   font-weight: 700;
 }
 
+.captcha-question {
+  display: inline-block;
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.captcha-row {
+  display: inline-grid;
+  grid-template-columns: auto 120px;
+  align-items: center;
+  justify-content: start;
+  gap: 6px;
+}
+
+.captcha-row input {
+  text-align: center;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+@media (max-width: 420px) {
+  .captcha-row {
+    grid-template-columns: auto 108px;
+    gap: 6px;
+  }
+}
+
 .hint,
 .char-count {
   color: var(--muted);

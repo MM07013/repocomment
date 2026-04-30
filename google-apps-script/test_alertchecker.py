@@ -216,7 +216,7 @@ def normalize_date_text(date_text: str) -> str:
 
 def parse_month_name_date(date_text: str) -> datetime | None:
     current_year = datetime.now().year
-    match = re.match(r"^([A-Za-z]+)\s+(\d{1,2})(?:\s+(\d{4}|\d{2})(?!\s*-))?$", date_text, re.IGNORECASE)
+    match = re.match(r"^([A-Za-z]+)\s+(\d{1,2})(?:\s+(\d{4}|\d{2}))?$", date_text, re.IGNORECASE)
     if not match:
         return None
 
@@ -230,7 +230,7 @@ def parse_month_name_date(date_text: str) -> datetime | None:
 
 def parse_day_month_name_date(date_text: str) -> datetime | None:
     current_year = datetime.now().year
-    match = re.match(r"^(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{4}|\d{2})(?!\s*-))?$", date_text, re.IGNORECASE)
+    match = re.match(r"^(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{4}|\d{2}))?$", date_text, re.IGNORECASE)
     if not match:
         return None
 
@@ -240,46 +240,6 @@ def parse_day_month_name_date(date_text: str) -> datetime | None:
 
     year = normalize_year(match.group(3)) if match.group(3) else current_year
     return build_valid_date(year, month, int(match.group(1)))
-
-
-def parse_month_year_date(date_text: str) -> datetime | None:
-    match = re.match(r"^([A-Za-z]+)\s+(\d{4}|\d{2})$", date_text, re.IGNORECASE)
-    if not match:
-        return None
-
-    month = MONTH_MAP.get(match.group(1).lower())
-    if not month:
-        return None
-
-    return build_valid_date(normalize_year(match.group(2)), month, 1)
-
-
-def parse_day_range_month_name_date(date_text: str) -> datetime | None:
-    current_year = datetime.now().year
-    match = re.match(r"^(\d{1,2})\s*-\s*\d{1,2}\s+([A-Za-z]+)(?:\s+(\d{4}|\d{2}))?$", date_text, re.IGNORECASE)
-    if not match:
-        return None
-
-    month = MONTH_MAP.get(match.group(2).lower())
-    if not month:
-        return None
-
-    year = normalize_year(match.group(3)) if match.group(3) else current_year
-    return build_valid_date(year, month, int(match.group(1)))
-
-
-def parse_month_name_day_range_date(date_text: str) -> datetime | None:
-    current_year = datetime.now().year
-    match = re.match(r"^([A-Za-z]+)\s+(\d{1,2})\s*-\s*\d{1,2}(?:\s+(\d{4}|\d{2}))?$", date_text, re.IGNORECASE)
-    if not match:
-        return None
-
-    month = MONTH_MAP.get(match.group(1).lower())
-    if not month:
-        return None
-
-    year = normalize_year(match.group(3)) if match.group(3) else current_year
-    return build_valid_date(year, month, int(match.group(2)))
 
 
 def parse_flexible_date(date_text: str) -> datetime | None:
@@ -305,59 +265,35 @@ def parse_flexible_date(date_text: str) -> datetime | None:
     if parsed:
         return parsed
 
-    parsed = parse_day_month_name_date(date_text)
-    if parsed:
-        return parsed
-
-    parsed = parse_month_year_date(date_text)
-    if parsed:
-        return parsed
-
-    parsed = parse_day_range_month_name_date(date_text)
-    if parsed:
-        return parsed
-
-    return parse_month_name_day_range_date(date_text)
-
-
-def find_first_absolute_date(text: str) -> datetime | None:
-    patterns = [
-        r"\b\d{4}[/-]\d{1,2}[/-]\d{1,2}\b",
-        r"\b\d{1,2}[/-]\d{1,2}[/-]\d{4}\b",
-        r"\b\d{1,2}[/-]\d{1,2}[/-]\d{2}\b",
-        r"\b\d{1,2}[/-]\d{1,2}\b",
-        r"\b[A-Za-z]+\s+\d{4}\b",
-        r"\b\d{1,2}\s*-\s*\d{1,2}\s+[A-Za-z]+(?:\s+\d{4}|\s+\d{2})?\b",
-        r"\b[A-Za-z]+\s+\d{1,2}\s*-\s*\d{1,2}(?:\s+\d{4}|\s+\d{2})?\b",
-        r"\b[A-Za-z]+\s+\d{1,2}(?:\s+(?:\d{4}|\d{2})(?!\s*-))?\b",
-        r"\b\d{1,2}\s+[A-Za-z]+(?:\s+(?:\d{4}|\d{2})(?!\s*-))?\b",
-    ]
-
-    best_match: tuple[int, datetime] | None = None
-
-    for pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if not match:
-            continue
-
-        parsed = parse_flexible_date(match.group(0))
-        if not parsed:
-            continue
-
-        if best_match is None or match.start() < best_match[0]:
-            best_match = (match.start(), parsed)
-
-    return best_match[1] if best_match else None
+    return parse_day_month_name_date(date_text)
 
 
 def extract_absolute_reminder_date(text: str) -> datetime | None:
     clean_text = str(text).strip()
-    reminder_match = re.search(r"\b(?:remind(?:\s+me)?|alert(?:\s+me)?)\b", clean_text, re.IGNORECASE)
-    if not reminder_match:
+    prefix_match = re.search(r"remind\s+me\s+on\s+(.+)", clean_text, re.IGNORECASE)
+    if not prefix_match:
         return None
 
-    remaining = normalize_date_text(clean_text[reminder_match.start():])
-    return find_first_absolute_date(remaining)
+    remaining = normalize_date_text(prefix_match.group(1))
+    patterns = [
+        r"^([A-Za-z]+)\s+(\d{1,2})(?:\s+(\d{4}|\d{2}))?",
+        r"^(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{4}|\d{2}))?",
+        r"^(\d{4})[/-](\d{1,2})[/-](\d{1,2})",
+        r"^(\d{1,2})[/-](\d{1,2})[/-](\d{4})",
+        r"^(\d{1,2})[/-](\d{1,2})[/-](\d{2})",
+        r"^(\d{1,2})[/-](\d{1,2})",
+    ]
+
+    for index in range(len(remaining)):
+        candidate = remaining[index:].lstrip()
+        for pattern in patterns:
+            match = re.match(pattern, candidate, re.IGNORECASE)
+            if not match:
+                continue
+            parsed = parse_flexible_date(match.group(0))
+            if parsed:
+                return parsed
+    return None
 
 
 def contains_reminder_language(text: str) -> bool:

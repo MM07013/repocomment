@@ -228,11 +228,35 @@ function parseBaseDate(value) {
 
 function extractAbsoluteReminderDate(text) {
   const cleanText = String(text).trim();
-  const reminderStart = cleanText.search(/\b(?:remind(?:\s+me)?|alert(?:\s+me)?)\b/i);
-  if (reminderStart === -1) return null;
 
-  const remaining = normalizeDateText(cleanText.substring(reminderStart));
-  return findFirstAbsoluteDate(remaining);
+  const prefixMatch = cleanText.match(/remind\s+me\s+on\s+(.+)/i);
+  if (!prefixMatch) return null;
+
+  const remaining = normalizeDateText(prefixMatch[1]);
+
+  const patterns = [
+    /^([A-Za-z]+)\s+(\d{1,2})(?:\s+(\d{4}|\d{2}))?/i,
+    /^(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{4}|\d{2}))?/i,
+    /^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/,
+    /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/,
+    /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2})/,
+    /^(\d{1,2})[\/\-](\d{1,2})/
+  ];
+
+  for (let i = 0; i < remaining.length; i++) {
+    const candidate = remaining.substring(i).trimStart();
+
+    for (const pattern of patterns) {
+      const m = candidate.match(pattern);
+      if (!m) continue;
+
+      const matchedText = m[0];
+      const parsed = parseFlexibleDate(matchedText);
+      if (parsed) return parsed;
+    }
+  }
+
+  return null;
 }
 
 function normalizeDateText(dateText) {
@@ -242,39 +266,6 @@ function normalizeDateText(dateText) {
   s = s.replace(/,/g, ' ');
   s = s.replace(/\s+/g, ' ').trim();
   return s;
-}
-
-function findFirstAbsoluteDate(text) {
-  const patterns = [
-    /\b\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}\b/,
-    /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\b/,
-    /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2}\b/,
-    /\b\d{1,2}[\/\-]\d{1,2}\b/,
-    /\b([A-Za-z]+)\s+(\d{4})\b/,
-    /\b(\d{1,2})\s*-\s*\d{1,2}\s+([A-Za-z]+)(?:\s+(\d{4}|\d{2}))?\b/,
-    /\b([A-Za-z]+)\s+(\d{1,2})\s*-\s*\d{1,2}(?:\s+(\d{4}|\d{2}))?\b/,
-    /\b([A-Za-z]+)\s+(\d{1,2})(?:\s+(\d{4}|\d{2})(?!\s*-))?\b/,
-    /\b(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{4}|\d{2})(?!\s*-))?\b/
-  ];
-
-  let bestMatch = null;
-
-  patterns.forEach(pattern => {
-    const match = pattern.exec(text);
-    if (!match) return;
-
-    const parsed = parseFlexibleDate(match[0]);
-    if (!parsed) return;
-
-    if (!bestMatch || match.index < bestMatch.index) {
-      bestMatch = {
-        index: match.index,
-        date: parsed
-      };
-    }
-  });
-
-  return bestMatch ? bestMatch.date : null;
 }
 
 function parseFlexibleDate(dateText) {
@@ -303,15 +294,6 @@ function parseFlexibleDate(dateText) {
   m = parseDayMonthNameDate(dateText);
   if (m) return m;
 
-  m = parseMonthYearDate(dateText);
-  if (m) return m;
-
-  m = parseDayRangeMonthNameDate(dateText);
-  if (m) return m;
-
-  m = parseMonthNameDayRangeDate(dateText);
-  if (m) return m;
-
   return null;
 }
 
@@ -332,7 +314,7 @@ function parseMonthNameDate(dateText) {
     december: 12, dec: 12
   };
 
-  const m = dateText.match(/^([A-Za-z]+)\s+(\d{1,2})(?:\s+(\d{4}|\d{2})(?!\s*-))?$/i);
+  const m = dateText.match(/^([A-Za-z]+)\s+(\d{1,2})(?:\s+(\d{4}|\d{2}))?$/i);
   if (!m) return null;
 
   const month = monthMap[m[1].toLowerCase()];
@@ -362,98 +344,13 @@ function parseDayMonthNameDate(dateText) {
     december: 12, dec: 12
   };
 
-  const m = dateText.match(/^(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{4}|\d{2})(?!\s*-))?$/i);
+  const m = dateText.match(/^(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{4}|\d{2}))?$/i);
   if (!m) return null;
 
   const day = +m[1];
   const month = monthMap[m[2].toLowerCase()];
   if (!month) return null;
 
-  let year = currentYear;
-  if (m[3]) year = normalizeYear(m[3]);
-
-  return buildValidDate(year, month, day);
-}
-
-function parseMonthYearDate(dateText) {
-  const monthMap = {
-    january: 1, jan: 1,
-    february: 2, feb: 2,
-    march: 3, mar: 3,
-    april: 4, apr: 4,
-    may: 5,
-    june: 6, jun: 6,
-    july: 7, jul: 7,
-    august: 8, aug: 8,
-    september: 9, sep: 9, sept: 9,
-    october: 10, oct: 10,
-    november: 11, nov: 11,
-    december: 12, dec: 12
-  };
-
-  const m = dateText.match(/^([A-Za-z]+)\s+(\d{4}|\d{2})$/i);
-  if (!m) return null;
-
-  const month = monthMap[m[1].toLowerCase()];
-  if (!month) return null;
-
-  return buildValidDate(normalizeYear(m[2]), month, 1);
-}
-
-function parseDayRangeMonthNameDate(dateText) {
-  const currentYear = new Date().getFullYear();
-  const monthMap = {
-    january: 1, jan: 1,
-    february: 2, feb: 2,
-    march: 3, mar: 3,
-    april: 4, apr: 4,
-    may: 5,
-    june: 6, jun: 6,
-    july: 7, jul: 7,
-    august: 8, aug: 8,
-    september: 9, sep: 9, sept: 9,
-    october: 10, oct: 10,
-    november: 11, nov: 11,
-    december: 12, dec: 12
-  };
-
-  const m = dateText.match(/^(\d{1,2})\s*-\s*\d{1,2}\s+([A-Za-z]+)(?:\s+(\d{4}|\d{2}))?$/i);
-  if (!m) return null;
-
-  const day = +m[1];
-  const month = monthMap[m[2].toLowerCase()];
-  if (!month) return null;
-
-  let year = currentYear;
-  if (m[3]) year = normalizeYear(m[3]);
-
-  return buildValidDate(year, month, day);
-}
-
-function parseMonthNameDayRangeDate(dateText) {
-  const currentYear = new Date().getFullYear();
-  const monthMap = {
-    january: 1, jan: 1,
-    february: 2, feb: 2,
-    march: 3, mar: 3,
-    april: 4, apr: 4,
-    may: 5,
-    june: 6, jun: 6,
-    july: 7, jul: 7,
-    august: 8, aug: 8,
-    september: 9, sep: 9, sept: 9,
-    october: 10, oct: 10,
-    november: 11, nov: 11,
-    december: 12, dec: 12
-  };
-
-  const m = dateText.match(/^([A-Za-z]+)\s+(\d{1,2})\s*-\s*\d{1,2}(?:\s+(\d{4}|\d{2}))?$/i);
-  if (!m) return null;
-
-  const month = monthMap[m[1].toLowerCase()];
-  if (!month) return null;
-
-  const day = +m[2];
   let year = currentYear;
   if (m[3]) year = normalizeYear(m[3]);
 
