@@ -44,15 +44,10 @@ function doPost(e) {
 
     var initials = ((e.parameter.initials || "") + "").trim().toUpperCase();
     var comment = ((e.parameter.reason || "") + "").trim();
-    var captchaAnswer = parseInt((e.parameter.captchaAnswer || "") + "", 10);
-    var captchaFirst = parseInt((e.parameter.captchaFirst || "") + "", 10);
-    var captchaSecond = parseInt((e.parameter.captchaSecond || "") + "", 10);
-    var captchaOperator = ((e.parameter.captchaOperator || "") + "").trim();
     var website = ((e.parameter.website || "") + "").trim();
     var formFilledMs = parseInt((e.parameter.formFilledMs || "") + "", 10);
     var turnstileToken = ((e.parameter.turnstileToken || "") + "").trim();
     var requestId = ((e.parameter.requestId || "") + "").trim();
-    var expectedCaptchaAnswer;
     var turnstileResult;
     var lock = LockService.getDocumentLock();
 
@@ -87,28 +82,6 @@ function doPost(e) {
         success: false,
         requestId: requestId,
         message: "Please wait a moment and try again."
-      });
-    }
-
-    if (captchaOperator === "+") {
-      expectedCaptchaAnswer = captchaFirst + captchaSecond;
-    } else if (captchaOperator === "-") {
-      expectedCaptchaAnswer = captchaFirst - captchaSecond;
-    } else if (captchaOperator === "x") {
-      expectedCaptchaAnswer = captchaFirst * captchaSecond;
-    }
-
-    if (
-      isNaN(captchaAnswer) ||
-      isNaN(captchaFirst) ||
-      isNaN(captchaSecond) ||
-      (expectedCaptchaAnswer !== 0 && !expectedCaptchaAnswer) ||
-      captchaAnswer !== expectedCaptchaAnswer
-    ) {
-      return submitResponse_({
-        success: false,
-        requestId: requestId,
-        message: "Captcha answer is invalid."
       });
     }
 
