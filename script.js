@@ -1,5 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIosPcw2sChEnVFVaTkayTpxcY3KIyG8j78yHA4-prR8rxfwWYNApGQQ9frz1sc98/exec";
-const APP_VERSION = "v2.8 - 2026-04-30";
+const APP_VERSION = "v2.9 - 2026-04-30";
 const MAX_COMMENT_LENGTH = 200;
 
 const form = document.getElementById("entry-form");
@@ -88,65 +88,11 @@ function postWithHiddenForm(payload) {
   });
 }
 
-function postWithVisibleForm(payload) {
-  return new Promise((resolve, reject) => {
-    const requestId = `submit_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    const targetName = `submit_window_${requestId}`;
-    const popup = window.open("about:blank", targetName);
-    const tempForm = document.createElement("form");
-    const timeoutMs = 20000;
-
-    if (!popup) {
-      reject(new Error("Please allow pop-ups to complete the save on iPhone Safari."));
-      return;
-    }
-
-    function cleanup() {
-      window.removeEventListener("message", handleMessage);
-      window.clearTimeout(timeoutId);
-      tempForm.remove();
-    }
-
-    function handleMessage(event) {
-      const data = event.data;
-
-      if (!data || data.source !== "repocomment-form" || data.requestId !== requestId) {
-        return;
-      }
-
-      cleanup();
-
-      if (data.success) {
-        resolve(data);
-      } else {
-        reject(new Error(data.message || "Could not save right now."));
-      }
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      cleanup();
-      reject(new Error("Could not confirm the save. Please try again."));
-    }, timeoutMs);
-
-    tempForm.method = "POST";
-    tempForm.action = SCRIPT_URL;
-    tempForm.target = targetName;
-    tempForm.style.display = "none";
-
-    Object.entries({
-      ...payload,
-      requestId
-    }).forEach(([key, value]) => {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = key;
-      input.value = value;
-      tempForm.appendChild(input);
-    });
-
-    window.addEventListener("message", handleMessage);
-    document.body.appendChild(tempForm);
-    tempForm.submit();
+function postWithNoCors(payload) {
+  return fetch(SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    body: new URLSearchParams(payload)
   });
 }
 
@@ -266,12 +212,16 @@ form.addEventListener("submit", async (event) => {
     };
 
     if (isLikelyIosSafari()) {
-      await postWithVisibleForm(payload);
+      await postWithNoCors(payload);
     } else {
       await postWithHiddenForm(payload);
     }
 
-    setStatus("Thank you for your submission.", "success");
+    if (isLikelyIosSafari()) {
+      setStatus("Submitted. Please check the sheet in a moment.", "success");
+    } else {
+      setStatus("Thank you for your submission.", "success");
+    }
     showFlash("success", "Saved");
     form.reset();
     syncCommentLength();
