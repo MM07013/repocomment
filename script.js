@@ -1,5 +1,5 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIosPcw2sChEnVFVaTkayTpxcY3KIyG8j78yHA4-prR8rxfwWYNApGQQ9frz1sc98/exec";
-const APP_VERSION = "v2.6 - 2026-04-30";
+const APP_VERSION = "v2.7 - 2026-04-30";
 const MAX_COMMENT_LENGTH = 200;
 
 const form = document.getElementById("entry-form");
@@ -17,6 +17,14 @@ const flashText = document.getElementById("flash-text");
 const initialsPattern = /^[A-Za-z]{2}$/;
 let flashTimeoutId;
 const formLoadedAt = Date.now();
+
+function isLikelyIosSafari() {
+  const ua = window.navigator.userAgent || "";
+  const isIos = /iPhone|iPad|iPod/i.test(ua);
+  const isWebKit = /WebKit/i.test(ua);
+  const isOtherBrowserShell = /CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
+  return isIos && isWebKit && !isOtherBrowserShell;
+}
 
 function postWithHiddenForm(payload) {
   return new Promise((resolve, reject) => {
@@ -78,6 +86,33 @@ function postWithHiddenForm(payload) {
     document.body.appendChild(tempForm);
     tempForm.submit();
   });
+}
+
+function postWithVisibleForm(payload) {
+  const targetName = `submit_window_${Date.now()}`;
+  const popup = window.open("about:blank", targetName);
+  const tempForm = document.createElement("form");
+
+  if (!popup) {
+    throw new Error("Please allow pop-ups to complete the save on iPhone Safari.");
+  }
+
+  tempForm.method = "POST";
+  tempForm.action = SCRIPT_URL;
+  tempForm.target = targetName;
+  tempForm.style.display = "none";
+
+  Object.entries(payload).forEach(([key, value]) => {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = key;
+    input.value = value;
+    tempForm.appendChild(input);
+  });
+
+  document.body.appendChild(tempForm);
+  tempForm.submit();
+  tempForm.remove();
 }
 
 function setStatus(message, type = "") {
@@ -187,13 +222,22 @@ form.addEventListener("submit", async (event) => {
   setStatus("Saving your entry...");
 
   try {
-    await postWithHiddenForm({
+    const payload = {
       initials,
       reason,
       website,
       formFilledMs: String(formFilledMs),
       turnstileToken: getTurnstileToken()
-    });
+    };
+
+    if (isLikelyIosSafari()) {
+      postWithVisibleForm(payload);
+      setStatus("A confirmation tab opened. Complete the save there.", "success");
+      showFlash("success", "Opened");
+      return;
+    }
+
+    await postWithHiddenForm(payload);
 
     setStatus("Thank you for your submission.", "success");
     showFlash("success", "Saved");
