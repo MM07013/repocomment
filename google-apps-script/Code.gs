@@ -1,13 +1,12 @@
-// v1.18 - 2026-04-30 07:00 PM ET
+// v1.17 - 2026-04-08 11:10 AM ET
 // Anti-spam hardening update:
 // - honeypot field check
-// - Cloudflare Turnstile server-side validation
-// - Turnstile hostname enforcement
 // - minimum form fill time check
 // - short burst rate limiting
 // - duplicate and repeated-pattern spam rejection
+// - Cloudflare Turnstile server-side validation
 // - stricter comment content filtering
-// - math check removed
+// - Turnstile hostname enforcement
 var QUEUE_SHEET_NAME = "Incoming";
 var FINAL_SHEET_NAME = "Sheet1";
 var MIN_FORM_FILL_MS = 2500;
@@ -45,10 +44,15 @@ function doPost(e) {
 
     var initials = ((e.parameter.initials || "") + "").trim().toUpperCase();
     var comment = ((e.parameter.reason || "") + "").trim();
+    var captchaAnswer = parseInt((e.parameter.captchaAnswer || "") + "", 10);
+    var captchaFirst = parseInt((e.parameter.captchaFirst || "") + "", 10);
+    var captchaSecond = parseInt((e.parameter.captchaSecond || "") + "", 10);
+    var captchaOperator = ((e.parameter.captchaOperator || "") + "").trim();
     var website = ((e.parameter.website || "") + "").trim();
     var formFilledMs = parseInt((e.parameter.formFilledMs || "") + "", 10);
     var turnstileToken = ((e.parameter.turnstileToken || "") + "").trim();
     var requestId = ((e.parameter.requestId || "") + "").trim();
+    var expectedCaptchaAnswer;
     var turnstileResult;
     var lock = LockService.getDocumentLock();
 
@@ -83,6 +87,28 @@ function doPost(e) {
         success: false,
         requestId: requestId,
         message: "Please wait a moment and try again."
+      });
+    }
+
+    if (captchaOperator === "+") {
+      expectedCaptchaAnswer = captchaFirst + captchaSecond;
+    } else if (captchaOperator === "-") {
+      expectedCaptchaAnswer = captchaFirst - captchaSecond;
+    } else if (captchaOperator === "x") {
+      expectedCaptchaAnswer = captchaFirst * captchaSecond;
+    }
+
+    if (
+      isNaN(captchaAnswer) ||
+      isNaN(captchaFirst) ||
+      isNaN(captchaSecond) ||
+      (expectedCaptchaAnswer !== 0 && !expectedCaptchaAnswer) ||
+      captchaAnswer !== expectedCaptchaAnswer
+    ) {
+      return submitResponse_({
+        success: false,
+        requestId: requestId,
+        message: "Captcha answer is invalid."
       });
     }
 
@@ -375,46 +401,18 @@ function jsonResponse_(payload) {
 }
 
 function submitResponse_(payload) {
-  var isSuccess = !!payload.success;
-  var safeMessage = escapeHtml_(payload.message || (isSuccess ? "Saved successfully." : "Could not save right now."));
-  var safeStatus = isSuccess ? "Saved" : "Not Saved";
-  var accentColor = isSuccess ? "#17663d" : "#b33939";
   var safePayload = JSON.stringify({
     source: "repocomment-form",
-    success: isSuccess,
+    success: !!payload.success,
     message: payload.message || "",
     requestId: payload.requestId || ""
   }).replace(/</g, "\\u003c");
 
   return HtmlService
     .createHtmlOutput(
-      '<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1">' +
-      '<title>' + safeStatus + '</title>' +
-      '<style>' +
-      'body{margin:0;font-family:Arial,sans-serif;background:#f6f4ee;color:#1f2a24;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px;}' +
-      '.card{max-width:420px;width:100%;background:#fff;border:1px solid rgba(31,42,36,.12);border-radius:20px;box-shadow:0 18px 40px rgba(31,42,36,.12);padding:24px;text-align:center;}' +
-      '.badge{font-size:32px;font-weight:700;color:' + accentColor + ';margin:0 0 10px;}' +
-      '.title{font-size:24px;font-weight:700;margin:0 0 8px;}' +
-      '.message{font-size:16px;line-height:1.45;margin:0 0 16px;}' +
-      '.hint{font-size:14px;color:#5d6b63;margin:0;}' +
-      '</style></head><body><div class="card"><p class="badge">' + safeStatus + '</p>' +
-      '<p class="title">' + safeMessage + '</p>' +
-      '<p class="hint">You can close this tab and return to the form.</p></div>' +
-      '<script>' +
-      "if (window.opener) { window.opener.postMessage(" + safePayload + ', "*"); }' +
-      "if (window.top && window.top !== window && window.top.postMessage) { window.top.postMessage(" + safePayload + ', "*"); }' +
-      "window.setTimeout(function(){ try { window.close(); } catch (e) {} }, 300);" +
+      '<!DOCTYPE html><html><body><script>' +
+      "window.top.postMessage(" + safePayload + ', "*");' +
       "</script></body></html>"
     )
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-}
-
-function escapeHtml_(value) {
-  if (value === null || value === undefined) return "";
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
